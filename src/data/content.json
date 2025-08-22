@@ -1,0 +1,63 @@
+{
+  "home": {
+    "hero": {
+      "title": "Conecta con el futuro de la cobranza",
+      "subtitle": "Especialistas en gestión de cobranza inteligente",
+      "description": "Transformamos la gestión de cartera con tecnología avanzada y estrategias personalizadas para maximizar la recuperación de tu inversión.",
+      "ctaText": "Contáctanos",
+      "ctaLink": "/contacto",
+      "backgroundEffect": "aurora",
+      "professionalVideo": {
+        "idle": "/videos/professional-woman-idle.mp4",
+        "talking": "/videos/professional-woman-talking.mp4",
+        "poster": "/images/professional-woman-poster.jpg",
+        "autoPlay": true,
+        "loop": true,
+        "muted": true,
+        "controls": false,
+        "playsInline": true,
+        "removeBackground": true,
+        "backgroundType": "black"
+      }
+    },
+    "navigation": {
+      "brand": "Intelcobro",
+      "logo": "/images/logo-intelcobro.svg",
+      "items": [
+        {
+          "id": "inicio",
+          "label": "Inicio",
+          "href": "/",
+          "active": true
+        },
+        {
+          "id": "servicios",
+          "label": "Servicios",
+          "href": "/servicios"
+        },
+        {
+          "id": "trabajar",
+          "label": "Trabaja con nosotros",
+          "href": "/trabajar"
+        },
+        {
+          "id": "solucionar",
+          "label": "Soluciona tu deuda",
+          "href": "/solucionar"
+        },
+        {
+          "id": "proteccion",
+          "label": "Protección de datos",
+          "href": "/proteccion"
+        }
+      ]
+    },
+    "seo": {
+      "title": "Intelcobro - Conecta con el futuro de la cobranza",
+      "description": "Especialistas en gestión de cobranza inteligente con tecnología avanzada. Recuperamos tu cartera con estrategias personalizadas y resultados garantizados.",
+      "keywords": ["cobranza", "gestión de cartera", "recuperación", "Ecuador", "tecnología financiera"],
+      "ogImage": "/images/og-image.jpg",
+      "twitterCard": "summary_large_image"
+    }
+  }
+}

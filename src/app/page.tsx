@@ -1,103 +1,109 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { Suspense } from 'react'
+import { Header } from '@/components/layout/Header'
+import { HeroSection } from '@/components/sections/HeroSection'
+import contentData from '@/data/content.json'
+import type { VideoConfig, HeroContent } from '@/types'
+
+// Loading component para Suspense - Completamente responsive
+function HeroSectionSkeleton() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center pt-14 sm:pt-16 lg:pt-20 px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-5rem)]">
+          {/* Skeleton del contenido - Completamente responsive */}
+          <div className="space-y-6 sm:space-y-8 text-center lg:text-left order-2 lg:order-1">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="h-10 sm:h-12 md:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse" />
+              <div className="h-10 sm:h-12 md:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse" />
+              <div className="h-10 sm:h-12 md:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse" />
+            </div>
+            <div className="h-6 sm:h-7 lg:h-8 bg-white/10 rounded-lg animate-pulse w-3/4 mx-auto lg:mx-0" />
+            <div className="h-4 sm:h-5 lg:h-6 bg-white/10 rounded-lg animate-pulse w-full" />
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
+              <div className="h-12 sm:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse w-full sm:w-40" />
+              <div className="h-12 sm:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse w-full sm:w-32" />
+            </div>
+          </div>
+          
+          {/* Skeleton del video - Completamente responsive */}
+          <div className="flex justify-center order-1 lg:order-2 mb-8 lg:mb-0">
+            <div className="aspect-square w-64 sm:w-72 md:w-80 lg:w-96 bg-white/10 rounded-full animate-pulse" />
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
-  );
+  )
+}
+
+export default function HomePage() {
+  // Extraer datos del contenido
+  const { home } = contentData
+  const { hero, navigation } = home
+
+  // Configuración del video desde el hero
+  const videoConfig: VideoConfig = {
+    idle: hero.professionalVideo.idle,
+    talking: hero.professionalVideo.talking,
+    poster: hero.professionalVideo.poster,
+    autoPlay: hero.professionalVideo.autoPlay,
+    loop: hero.professionalVideo.loop,
+    muted: hero.professionalVideo.muted,
+    controls: hero.professionalVideo.controls,
+    playsInline: hero.professionalVideo.playsInline,
+    removeBackground: hero.professionalVideo.removeBackground,
+    backgroundType: hero.professionalVideo.backgroundType as 'black' | 'white' | 'transparent',
+  }
+
+  // Contenido del hero (sin el video)
+  const heroContent: HeroContent = {
+    title: hero.title,
+    subtitle: hero.subtitle,
+    description: hero.description,
+    ctaText: hero.ctaText,
+    ctaLink: hero.ctaLink,
+    backgroundEffect: hero.backgroundEffect as 'aurora' | 'water' | 'particles' | 'gradient',
+  }
+
+  return (
+    <>
+      {/* Header fijo */}
+      <Header
+        navigationItems={navigation.items}
+        logo={navigation.logo}
+        brand={navigation.brand}
+      />
+
+      {/* Contenido principal - Sin spacer adicional */}
+      <main className="relative">
+        <Suspense fallback={<HeroSectionSkeleton />}>
+          <HeroSection
+            content={heroContent}
+            videoConfig={videoConfig}
+          />
+        </Suspense>
+        
+        {/* Aquí irán las demás secciones cuando se implementen */}
+        {/* 
+        <Suspense fallback={<SectionSkeleton />}>
+          <ServicesSection />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <AboutSection />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <ContactSection />
+        </Suspense>
+        */}
+      </main>
+
+      {/* Footer se agregará en futuras iteraciones */}
+      {/* 
+      <Footer />
+      */}
+    </>
+  )
 }
