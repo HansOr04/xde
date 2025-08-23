@@ -1,3 +1,4 @@
+// src/components/ui/Button.tsx
 'use client'
 
 import * as React from 'react'
@@ -255,9 +256,12 @@ export const CTAButton = React.forwardRef<HTMLButtonElement, CTAButtonProps>(
     onMouseMove,
     onMouseLeave,
     ...props 
-  }) => {
+  }, ref) => {
     const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 })
     const buttonRef = React.useRef<HTMLButtonElement>(null)
+
+    // Combine refs
+    React.useImperativeHandle(ref, () => buttonRef.current!, [])
 
     const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (magneticEffect && buttonRef.current) {

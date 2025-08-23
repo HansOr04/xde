@@ -1,3 +1,4 @@
+// src/components/backgrounds/AuroraBackground.tsx
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -29,15 +30,21 @@ export function AuroraBackground({
   const animationFrameRef = useRef<number | null>(null)
   const { reducedMotion } = useUIStore()
   const [isVisible, setIsVisible] = useState(true)
+  const [isClient, setIsClient] = useState(false)
 
-  // Configuración basada en intensidad
+  // Ensure client-side rendering
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Configuration based on intensity
   const config = {
     low: { bands: 3, opacity: 0.2, movement: 0.5 },
     medium: { bands: 5, opacity: 0.4, movement: 1 },
     high: { bands: 7, opacity: 0.6, movement: 1.5 },
   }[intensity]
 
-  // Configuración de velocidad
+  // Speed configuration
   const speedMultiplier = {
     slow: 0.5,
     normal: 1,
@@ -45,6 +52,8 @@ export function AuroraBackground({
   }[speed]
 
   useEffect(() => {
+    if (!isClient) return
+
     const canvas = canvasRef.current
     if (!canvas || reducedMotion) return
 
@@ -63,7 +72,7 @@ export function AuroraBackground({
       opacity: number
     }> = []
 
-    // Función para redimensionar canvas
+    // Function to resize canvas
     const resizeCanvas = () => {
       const rect = canvas.getBoundingClientRect()
       const devicePixelRatio = window.devicePixelRatio || 1
@@ -76,14 +85,14 @@ export function AuroraBackground({
       canvas.style.height = rect.height + 'px'
     }
 
-    // Inicializar ondas aurora
+    // Initialize aurora waves
     const initializeWaves = () => {
       waves.length = 0
       const canvasWidth = canvas.offsetWidth
       const canvasHeight = canvas.offsetHeight
 
       for (let i = 0; i < config.bands; i++) {
-        // Asegurar que siempre hay un color válido
+        // Ensure there's always a valid color
         const colorIndex = i % colors.length
         const selectedColor = colors[colorIndex] || 'rgba(147, 197, 253, 0.3)'
         
@@ -100,29 +109,29 @@ export function AuroraBackground({
       }
     }
 
-    // Función de animación
+    // Animation function
     const animate = () => {
       if (!isVisible || reducedMotion) return
 
       const canvasWidth = canvas.offsetWidth
       const canvasHeight = canvas.offsetHeight
 
-      // Limpiar canvas
+      // Clear canvas
       ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
-      // Dibujar cada banda de aurora
+      // Draw each aurora band
       waves.forEach((wave, index) => {
-        // Actualizar posición
+        // Update position
         wave.x += wave.speed * config.movement
         wave.angle += 0.01 * wave.speed
 
-        // Reiniciar onda cuando sale de pantalla
+        // Reset wave when it goes off screen
         if (wave.x > canvasWidth + wave.width) {
           wave.x = -wave.width
           wave.y = (canvasHeight / config.bands) * index + Math.random() * 100
         }
 
-        // Crear gradiente
+        // Create gradient
         const gradient = ctx.createLinearGradient(
           wave.x,
           wave.y,
@@ -136,11 +145,11 @@ export function AuroraBackground({
         gradient.addColorStop(0.7, baseColor)
         gradient.addColorStop(1, 'transparent')
 
-        // Configurar filtros
+        // Configure filters
         ctx.filter = `blur(${blur}px)`
         ctx.globalCompositeOperation = 'screen'
 
-        // Dibujar onda
+        // Draw wave
         ctx.fillStyle = gradient
         ctx.save()
         ctx.translate(wave.x + wave.width / 2, wave.y + wave.height / 2)
@@ -160,7 +169,7 @@ export function AuroraBackground({
         ctx.fill()
         ctx.restore()
 
-        // Resetear filtros
+        // Reset filters
         ctx.filter = 'none'
         ctx.globalCompositeOperation = 'source-over'
       })
@@ -169,7 +178,7 @@ export function AuroraBackground({
       animationFrameRef.current = requestAnimationFrame(animate)
     }
 
-    // Configurar observador de intersección para optimización
+    // Set up intersection observer for optimization
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -179,7 +188,7 @@ export function AuroraBackground({
       { threshold: 0.1 }
     )
 
-    // Inicializar
+    // Initialize
     resizeCanvas()
     initializeWaves()
     if (!reducedMotion) {
@@ -203,10 +212,10 @@ export function AuroraBackground({
       observer.disconnect()
       window.removeEventListener('resize', handleResize)
     }
-  }, [intensity, speed, blur, reducedMotion, isVisible, colors, config, speedMultiplier])
+  }, [intensity, speed, blur, reducedMotion, isVisible, colors, config, speedMultiplier, isClient])
 
-  // Renderizar versión estática si se prefiere movimiento reducido
-  if (reducedMotion) {
+  // Render static version if reduced motion is preferred or not client-side
+  if (reducedMotion || !isClient) {
     return (
       <div className={cn("absolute inset-0 overflow-hidden", className)}>
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20" />
@@ -225,29 +234,37 @@ export function AuroraBackground({
         }}
       />
       
-      {/* Overlay gradient para mejorar legibilidad */}
+      {/* Overlay gradient to improve readability */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10" />
       
-      {/* Efectos adicionales de partículas (opcional) */}
+      {/* Additional particle effects (optional) */}
       <div className="absolute inset-0 opacity-30">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`,
-            }}
-          />
-        ))}
+        {Array.from({ length: 20 }).map((_, i) => {
+          // Generate consistent but random positions for SSR
+          const left = (i * 17.3) % 100
+          const top = (i * 23.7) % 100
+          const delay = (i * 0.5) % 3
+          const duration = 2 + (i % 3)
+          
+          return (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+              style={{
+                left: `${left}%`,
+                top: `${top}%`,
+                animationDelay: `${delay}s`,
+                animationDuration: `${duration}s`,
+              }}
+            />
+          )
+        })}
       </div>
     </div>
   )
 }
 
-// Componente especializado para hero sections
+// Specialized component for hero sections
 export function HeroAuroraBackground({ className, ...props }: AuroraBackgroundProps) {
   return (
     <AuroraBackground
@@ -266,7 +283,7 @@ export function HeroAuroraBackground({ className, ...props }: AuroraBackgroundPr
   )
 }
 
-// Componente para fondos sutiles
+// Component for subtle backgrounds
 export function SubtleAuroraBackground({ className, ...props }: AuroraBackgroundProps) {
   return (
     <AuroraBackground

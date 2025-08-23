@@ -129,25 +129,6 @@ export function HeroSection({ content, videoConfig, className }: HeroSectionProp
               <span className="block">cobranza</span>
             </motion.h1>
 
-            {/* Subtítulo */}
-            {content.subtitle && (
-              <motion.p
-                variants={itemVariants}
-                className="text-lg sm:text-xl lg:text-2xl text-blue-100 font-light leading-relaxed"
-              >
-                {content.subtitle}
-              </motion.p>
-            )}
-
-            {/* Descripción */}
-            {content.description && (
-              <motion.p
-                variants={itemVariants}
-                className="text-base sm:text-lg text-blue-200/80 leading-relaxed max-w-2xl mx-auto lg:mx-0"
-              >
-                {content.description}
-              </motion.p>
-            )}
 
             {/* Botones de acción */}
             <motion.div

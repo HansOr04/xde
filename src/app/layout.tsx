@@ -1,3 +1,4 @@
+// src/app/layout.tsx
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
@@ -67,30 +68,34 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={inter.variable}>
+    <html 
+      lang="es" 
+      className={inter.variable}
+      suppressHydrationWarning
+    >
       <head>
-        {/* Preconnect para optimización */}
+        {/* Preconnect for optimization */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         
-        {/* Manifest para PWA */}
+        {/* Manifest for PWA */}
         <link rel="manifest" href="/manifest.json" />
         
         {/* Icons */}
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         
-        {/* Theme color para navegadores móviles */}
+        {/* Theme color for mobile browsers */}
         <meta name="theme-color" content="#e74c3c" />
         <meta name="msapplication-TileColor" content="#e74c3c" />
         
-        {/* Viewport optimizado */}
+        {/* Optimized viewport */}
         <meta 
           name="viewport" 
           content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" 
         />
         
-        {/* Preload de recursos críticos */}
+        {/* Preload critical resources */}
         <link 
           rel="preload" 
           href="/videos/professional-woman-idle.mp4" 
@@ -98,7 +103,7 @@ export default function RootLayout({
           type="video/mp4"
         />
         
-        {/* DNS prefetch para APIs externas */}
+        {/* DNS prefetch for external APIs */}
         <link rel="dns-prefetch" href="//api.intelcobro.com" />
         
         {/* Structured data */}
@@ -138,7 +143,7 @@ export default function RootLayout({
         className={`${inter.className} font-sans antialiased bg-white text-gray-900`}
         suppressHydrationWarning
       >
-        {/* Skip to main content para accesibilidad */}
+        {/* Skip to main content for accessibility */}
         <a 
           href="#main-content" 
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-white px-4 py-2 rounded-md z-50"
@@ -146,66 +151,74 @@ export default function RootLayout({
           Saltar al contenido principal
         </a>
         
-        {/* Contenido principal */}
+        {/* Main content */}
         <div id="main-content" className="min-h-screen flex flex-col">
           {children}
         </div>
         
-        {/* Scripts de analytics y tracking */}
+        {/* Analytics and tracking scripts */}
         {process.env.NODE_ENV === 'production' && (
           <>
             {/* Google Analytics */}
-            <script
-              async
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-            />
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  window.dataLayer = window.dataLayer || [];
-                  function gtag(){dataLayer.push(arguments);}
-                  gtag('js', new Date());
-                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
-                `,
-              }}
-            />
+            {process.env.NEXT_PUBLIC_GA_ID && (
+              <>
+                <script
+                  async
+                  src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+                />
+                <script
+                  dangerouslySetInnerHTML={{
+                    __html: `
+                      window.dataLayer = window.dataLayer || [];
+                      function gtag(){dataLayer.push(arguments);}
+                      gtag('js', new Date());
+                      gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+                    `,
+                  }}
+                />
+              </>
+            )}
             
-            {/* Hotjar o similar para heatmaps */}
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  (function(h,o,t,j,a,r){
-                    h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
-                    h._hjSettings={hjid:${process.env.NEXT_PUBLIC_HOTJAR_ID},hjsv:6};
-                    a=o.getElementsByTagName('head')[0];
-                    r=o.createElement('script');r.async=1;
-                    r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
-                    a.appendChild(r);
-                  })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
-                `,
-              }}
-            />
+            {/* Hotjar or similar for heatmaps */}
+            {process.env.NEXT_PUBLIC_HOTJAR_ID && (
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    (function(h,o,t,j,a,r){
+                      h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+                      h._hjSettings={hjid:${process.env.NEXT_PUBLIC_HOTJAR_ID},hjsv:6};
+                      a=o.getElementsByTagName('head')[0];
+                      r=o.createElement('script');r.async=1;
+                      r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+                      a.appendChild(r);
+                    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+                  `,
+                }}
+              />
+            )}
           </>
         )}
         
-        {/* Service Worker para PWA */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('SW registered: ', registration);
-                    })
-                    .catch(function(registrationError) {
-                      console.log('SW registration failed: ', registrationError);
-                    });
-                });
-              }
-            `,
-          }}
-        />
+        {/* Service Worker for PWA - Only run in production */}
+        {process.env.NODE_ENV === 'production' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js')
+                      .then(function(registration) {
+                        console.log('SW registered: ', registration);
+                      })
+                      .catch(function(registrationError) {
+                        console.log('SW registration failed: ', registrationError);
+                      });
+                  });
+                }
+              `,
+            }}
+          />
+        )}
       </body>
     </html>
   )

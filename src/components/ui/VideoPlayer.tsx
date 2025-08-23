@@ -1,3 +1,4 @@
+// src/components/ui/VideoPlayer.tsx
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
@@ -18,12 +19,12 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
   const talkingVideoRef = useRef<HTMLVideoElement>(null)
   const [isLoaded, setIsLoaded] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
 
   const {
     currentVideo,
     shouldShowTalkingVideo,
     shouldShowIdleVideo,
-    isInteracting,
   } = useVideoState({
     autoReturnToIdle: true,
     idleTimeout: 3000,
@@ -35,19 +36,21 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
     autoDetect: true,
   })
 
-  // Suprimir warning de variable no usada
-  const _ = { isInteracting, talkingVideoRef }
+  // Ensure client-side rendering
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
-  // Función para configurar un video
+  // Function to configure a video
   const setupVideo = useCallback((
     videoElement: HTMLVideoElement,
     src: string,
     isActive: boolean
   ) => {
-    if (!videoElement) return
+    if (!videoElement || !isClient) return
 
     try {
-      // Configurar propiedades básicas
+      // Configure basic properties
       videoElement.src = src
       videoElement.autoplay = config.autoPlay ?? true
       videoElement.loop = config.loop ?? true
@@ -55,27 +58,27 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
       videoElement.controls = config.controls ?? false
       videoElement.playsInline = config.playsInline ?? true
       
-      // Configurar poster si está disponible
+      // Set poster if available
       if (config.poster && !isActive) {
         videoElement.poster = config.poster
       }
 
-      // Aplicar estilos para ocultar controles completamente
+      // Apply styles to completely hide controls
       videoElement.style.outline = 'none'
       videoElement.style.border = 'none'
       
-      // Remover atributos de control
+      // Remove control attributes
       videoElement.removeAttribute('controls')
       videoElement.setAttribute('disablePictureInPicture', 'true')
       videoElement.setAttribute('controlsList', 'nodownload nofullscreen noremoteplayback')
 
-      // Aplicar remoción de fondo si está habilitada
+      // Apply background removal if enabled
       if (config.removeBackground) {
         backgroundRemoval.optimizeForPerformance(videoElement)
         backgroundRemoval.detectBackground(videoElement)
       }
 
-      // Configurar visibilidad inicial
+      // Configure initial visibility
       videoElement.style.opacity = isActive ? '1' : '0'
       videoElement.style.zIndex = isActive ? '2' : '1'
       videoElement.style.transition = 'opacity 0.3s ease-in-out'
@@ -84,23 +87,23 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
       console.error('Error setting up video:', error)
       onError?.(error instanceof Error ? error.message : 'Error configurando video')
     }
-  }, [config, backgroundRemoval, onError])
+  }, [config, backgroundRemoval, onError, isClient])
 
-  // Función para manejar la carga del video
+  // Function to handle video load
   const handleVideoLoad = useCallback((videoElement: HTMLVideoElement) => {
     setIsLoaded(true)
     onLoad?.()
     
-    // Asegurar reproducción automática
+    // Ensure autoplay
     if (config.autoPlay) {
       videoElement.play().catch((error) => {
         console.warn('Autoplay prevented:', error)
-        // El autoplay puede estar bloqueado, esto es normal
+        // Autoplay may be blocked, this is normal
       })
     }
   }, [config.autoPlay, onLoad])
 
-  // Función para manejar errores de video
+  // Function to handle video errors
   const handleVideoError = useCallback((error: Event, videoType: 'idle' | 'talking') => {
     const errorMessage = `Error cargando video ${videoType}`
     setLoadError(errorMessage)
@@ -108,7 +111,7 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
     console.error('Video error:', error)
   }, [onError])
 
-  // Función para cambiar entre videos
+  // Function to switch between videos
   const switchVideo = useCallback((showTalking: boolean) => {
     const idleVideo = idleVideoRef.current
     const talkingVideo = talkingVideoRef.current
@@ -117,24 +120,24 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
 
     try {
       if (showTalking) {
-        // Mostrar video hablando
+        // Show talking video
         talkingVideo.style.opacity = '1'
         talkingVideo.style.zIndex = '3'
         idleVideo.style.opacity = '0'
         idleVideo.style.zIndex = '1'
         
-        // Asegurar que el video talking esté reproduciéndose
+        // Ensure talking video is playing
         if (talkingVideo.paused) {
           talkingVideo.play().catch(console.warn)
         }
       } else {
-        // Mostrar video idle
+        // Show idle video
         idleVideo.style.opacity = '1'
         idleVideo.style.zIndex = '3'
         talkingVideo.style.opacity = '0'
         talkingVideo.style.zIndex = '1'
         
-        // Asegurar que el video idle esté reproduciéndose
+        // Ensure idle video is playing
         if (idleVideo.paused) {
           idleVideo.play().catch(console.warn)
         }
@@ -144,10 +147,11 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
     }
   }, [])
 
-  // Configurar videos cuando cambien las referencias
+  // Configure videos when references change
   useEffect(() => {
+    if (!isClient) return
+
     const idleVideo = idleVideoRef.current
-    const talkingVideo = talkingVideoRef.current
 
     if (idleVideo && config.idle) {
       setupVideo(idleVideo, config.idle, currentVideo === 'idle')
@@ -163,9 +167,11 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
         idleVideo.removeEventListener('error', handleError)
       }
     }
-  }, [config.idle, currentVideo, setupVideo, handleVideoLoad, handleVideoError])
+  }, [config.idle, currentVideo, setupVideo, handleVideoLoad, handleVideoError, isClient])
 
   useEffect(() => {
+    if (!isClient) return
+
     const talkingVideo = talkingVideoRef.current
 
     if (talkingVideo && config.talking) {
@@ -182,14 +188,16 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
         talkingVideo.removeEventListener('error', handleError)
       }
     }
-  }, [config.talking, currentVideo, setupVideo, handleVideoLoad, handleVideoError])
+  }, [config.talking, currentVideo, setupVideo, handleVideoLoad, handleVideoError, isClient])
 
-  // Manejar cambios de estado del video
+  // Handle video state changes
   useEffect(() => {
-    switchVideo(shouldShowTalkingVideo)
-  }, [shouldShowTalkingVideo, switchVideo])
+    if (isClient) {
+      switchVideo(shouldShowTalkingVideo)
+    }
+  }, [shouldShowTalkingVideo, switchVideo, isClient])
 
-  // Limpiar recursos al desmontar
+  // Clean up resources on unmount
   useEffect(() => {
     return () => {
       const idleVideo = idleVideoRef.current
@@ -207,6 +215,7 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
     }
   }, [])
 
+  // Show error state
   if (loadError) {
     return (
       <div className={cn(
@@ -221,12 +230,26 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
     )
   }
 
+  // Show loading state for SSR
+  if (!isClient) {
+    return (
+      <div className={cn(
+        "relative w-full h-full overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center",
+        className
+      )}>
+        <div className="animate-pulse">
+          <div className="w-16 h-16 bg-white/20 rounded-full"></div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={cn(
       "relative w-full h-full overflow-hidden video-container",
       className
     )}>
-      {/* Video Idle */}
+      {/* Idle Video */}
       <video
         ref={idleVideoRef}
         className={cn(
@@ -246,7 +269,7 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
         controlsList="nodownload nofullscreen noremoteplaybook"
       />
 
-      {/* Video Talking */}
+      {/* Talking Video */}
       <video
         ref={talkingVideoRef}
         className={cn(
@@ -267,17 +290,17 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
       />
 
       {/* Loading overlay */}
-      {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+      {!isLoaded && isClient && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 backdrop-blur-sm">
           <div className="animate-pulse">
-            <div className="w-16 h-16 bg-gray-300 rounded-full"></div>
+            <div className="w-16 h-16 bg-gray-300/50 rounded-full"></div>
           </div>
         </div>
       )}
 
-      {/* Debug info (solo en desarrollo) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs p-2 rounded">
+      {/* Debug info (only in development) */}
+      {process.env.NODE_ENV === 'development' && isClient && (
+        <div className="absolute top-2 left-2 bg-black/50 text-white text-xs p-2 rounded">
           <div>Current: {currentVideo}</div>
           <div>Talking: {shouldShowTalkingVideo ? 'YES' : 'NO'}</div>
           <div>Idle: {shouldShowIdleVideo ? 'YES' : 'NO'}</div>

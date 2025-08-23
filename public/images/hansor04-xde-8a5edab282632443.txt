@@ -1,0 +1,5650 @@
+Directory structure:
+└── hansor04-xde/
+    ├── README.md
+    ├── eslint.config.mjs
+    ├── next.config.js
+    ├── package.json
+    ├── postcss.config.js
+    ├── tailwind.config.ts
+    ├── tsconfig.json
+    └── src/
+        ├── app/
+        │   ├── globals.css
+        │   ├── layout.tsx
+        │   └── page.tsx
+        ├── components/
+        │   ├── backgrounds/
+        │   │   └── AuroraBackground.tsx
+        │   ├── layout/
+        │   │   ├── Header.tsx
+        │   │   └── Navigation.tsx
+        │   ├── sections/
+        │   │   └── HeroSection.tsx
+        │   └── ui/
+        │       ├── Button.tsx
+        │       └── VideoPlayer.tsx
+        ├── data/
+        │   └── content.json
+        ├── hooks/
+        │   ├── useBackgroundRemoval.tsx
+        │   └── useVideoState.tsx
+        ├── lib/
+        │   ├── api.ts
+        │   ├── constants.ts
+        │   ├── store.ts
+        │   └── utils.ts
+        └── types/
+            ├── index.ts
+            └── video.ts
+
+================================================
+FILE: README.md
+================================================
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+================================================
+FILE: eslint.config.mjs
+================================================
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
+
+const eslintConfig = [
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    ignores: [
+      "node_modules/**",
+      ".next/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+    ],
+  },
+];
+
+export default eslintConfig;
+
+
+
+================================================
+FILE: next.config.js
+================================================
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    // Habilitar características experimentales de Next.js 15
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
+  },
+  // Optimizaciones de imágenes y videos
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+  // Headers de seguridad
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
+      // Headers específicos para videos
+      {
+        source: '/videos/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ]
+  },
+  // Configuración para videos y assets
+  webpack: (config, { isServer }) => {
+    // Configuración para manejar videos
+    config.module.rules.push({
+      test: /\.(mp4|webm|ogg|swf|ogv)$/,
+      use: {
+        loader: 'file-loader',
+        options: {
+          publicPath: '/_next/static/videos/',
+          outputPath: `${isServer ? '../' : ''}static/videos/`,
+          name: '[name].[hash].[ext]',
+        },
+      },
+    });
+
+    // Configuración para SVGs
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
+
+    return config;
+  },
+  // Configuración de compilación
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // Variables de entorno públicas
+  env: {
+    NEXT_PUBLIC_APP_NAME: 'Intelcobro',
+    NEXT_PUBLIC_APP_VERSION: '1.0.0',
+  },
+}
+
+module.exports = nextConfig
+
+
+================================================
+FILE: package.json
+================================================
+{
+  "name": "intelcobro-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.1",
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.23.12",
+    "lucide-react": "^0.540.0",
+    "next": "15.5.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-hook-form": "^7.62.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.0.17",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/forms": "^0.5.10",
+    "@types/node": "^20.19.11",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
+  }
+}
+
+
+
+================================================
+FILE: postcss.config.js
+================================================
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+
+================================================
+FILE: tailwind.config.ts
+================================================
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/hooks/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/lib/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#e74c3c',
+          600: '#dc2626',
+          700: '#b91c1c',
+          800: '#991b1b',
+          900: '#7f1d1d',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3498db',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f39c12',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+      },
+      fontSize: {
+        'xs': ['0.75rem', { lineHeight: '1rem' }],
+        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
+        'base': ['1rem', { lineHeight: '1.5rem' }],
+        'lg': ['1.125rem', { lineHeight: '1.75rem' }],
+        'xl': ['1.25rem', { lineHeight: '1.75rem' }],
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+        '5xl': ['3rem', { lineHeight: '1' }],
+        '6xl': ['3.75rem', { lineHeight: '1' }],
+      },
+      animation: {
+        'aurora': 'aurora 20s ease-in-out infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'glow': 'glow 2s ease-in-out infinite alternate',
+        'video-fade': 'videoFade 0.5s ease-in-out',
+        'entrance': 'fadeInUp 0.6s ease-out forwards',
+        'pulse-gentle': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      keyframes: {
+        aurora: {
+          '0%, 100%': {
+            transform: 'translateX(-100%) skewX(0deg)',
+            opacity: '0',
+          },
+          '25%': {
+            transform: 'translateX(-50%) skewX(5deg)',
+            opacity: '0.4',
+          },
+          '50%': {
+            transform: 'translateX(0%) skewX(0deg)',
+            opacity: '0.6',
+          },
+          '75%': {
+            transform: 'translateX(50%) skewX(-5deg)',
+            opacity: '0.4',
+          },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        glow: {
+          '0%': { boxShadow: '0 0 5px rgba(231, 76, 60, 0.5)' },
+          '100%': { boxShadow: '0 0 20px rgba(231, 76, 60, 0.8), 0 0 30px rgba(231, 76, 60, 0.6)' },
+        },
+        videoFade: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeInUp: {
+          from: {
+            opacity: '0',
+            transform: 'translateY(30px)',
+          },
+          to: {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+      screens: {
+        'xs': '475px',
+        '3xl': '1600px',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+      },
+      backgroundImage: {
+        'aurora': 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
+        'intelcobro-gradient': 'linear-gradient(135deg, #e74c3c 0%, #3498db 100%)',
+      },
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms')({
+      strategy: 'class',
+    }),
+  ],
+}
+
+export default config
+
+
+================================================
+FILE: tsconfig.json
+================================================
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["dom", "dom.iterable", "ES6", "ES2020"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/data/*": ["./src/data/*"],
+      "@/styles/*": ["./src/styles/*"]
+    },
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist"
+  ]
+}
+
+
+================================================
+FILE: src/app/globals.css
+================================================
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== VARIABLES CSS PERSONALIZADAS ===== */
+:root {
+  /* Colores principales */
+  --primary-rgb: 231, 76, 60;
+  --primary-500: rgb(231, 76, 60);
+  --primary-400: rgb(241, 96, 80);
+  --primary-600: rgb(211, 56, 40);
+  --primary-300: rgb(251, 116, 100);
+  --primary-700: rgb(191, 36, 20);
+  
+  /* Colores secundarios */
+  --secondary-rgb: 52, 152, 219;
+  --secondary-500: rgb(52, 152, 219);
+  --secondary-400: rgb(72, 172, 239);
+  --secondary-600: rgb(32, 132, 199);
+  
+  /* Colores de acento */
+  --accent-rgb: 155, 89, 182;
+  --accent-500: rgb(155, 89, 182);
+  --accent-400: rgb(175, 109, 202);
+  --accent-600: rgb(135, 69, 162);
+  
+  /* Backgrounds */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  
+  /* Card */
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  
+  /* Popover */
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  
+  /* Primary */
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+  
+  /* Secondary */
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  
+  /* Muted */
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  
+  /* Accent */
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  
+  /* Destructive */
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  
+  /* Border */
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  
+  /* Ring */
+  --ring: 222.2 84% 4.9%;
+  
+  /* Radius */
+  --radius: 0.5rem;
+  
+  /* Shadows personalizadas */
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(var(--primary-rgb), 0.3);
+  --shadow-3xl: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+}
+
+/* ===== CONFIGURACIÓN BASE ===== */
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* ===== ANIMACIONES PERSONALIZADAS ===== */
+
+/* Animaciones de entrada */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Animaciones de efectos */
+@keyframes pulse-gentle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.3);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(var(--primary-rgb), 0.6);
+    filter: brightness(1.1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bounce-gentle {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40%, 43% {
+    transform: translateY(-5px);
+  }
+  70% {
+    transform: translateY(-3px);
+  }
+  90% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes wiggle {
+  0%, 7%, 14%, 21%, 28%, 35%, 42%, 49%, 56%, 63%, 70%, 77%, 84%, 91%, 98%, 100% {
+    transform: rotate(0deg);
+  }
+  3.5%, 10.5%, 17.5%, 24.5%, 31.5%, 38.5%, 45.5%, 52.5%, 59.5%, 66.5%, 73.5%, 80.5%, 87.5%, 94.5% {
+    transform: rotate(1deg);
+  }
+  7%, 14%, 21%, 28%, 35%, 42%, 49%, 56%, 63%, 70%, 77%, 84%, 91%, 98% {
+    transform: rotate(-1deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+/* Animaciones de loading */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Animaciones especiales para elementos */
+@keyframes typewriter {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+/* ===== CLASES DE UTILIDAD PARA ANIMACIONES ===== */
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease-out;
+}
+
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 1s ease-in-out;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
+
+.animate-zoomIn {
+  animation: zoomIn 0.3s ease-out;
+}
+
+.animate-zoomOut {
+  animation: zoomOut 0.3s ease-out;
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 3s ease infinite;
+}
+
+.animate-slideInFromBottom {
+  animation: slideInFromBottom 0.5s ease-out;
+}
+
+.animate-slideOutToBottom {
+  animation: slideOutToBottom 0.5s ease-out;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-typewriter {
+  animation: typewriter 2s steps(40, end);
+}
+
+/* ===== EFECTOS DE GLASS MORPHISM ===== */
+.glass {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-glass);
+}
+
+.glass-nav {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+}
+
+.glass-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.glass-nav-solid {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-nav-transparent {
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.glass-button {
+  position: relative;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background-clip: padding-box;
+}
+
+.glass-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ===== EFECTOS DE HOVER MEJORADOS ===== */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.hover-glow {
+  transition: all 0.3s ease;
+}
+
+.hover-glow:hover {
+  filter: brightness(1.1) drop-shadow(0 0 20px rgba(var(--primary-rgb), 0.6));
+}
+
+.hover-scale {
+  transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-scale-lg {
+  transition: transform 0.3s ease;
+}
+
+.hover-scale-lg:hover {
+  transform: scale(1.1);
+}
+
+.hover-rotate {
+  transition: transform 0.3s ease;
+}
+
+.hover-rotate:hover {
+  transform: rotate(5deg);
+}
+
+.hover-blur {
+  transition: filter 0.3s ease;
+}
+
+.hover-blur:hover {
+  filter: blur(2px);
+}
+
+.hover-brighten {
+  transition: filter 0.3s ease;
+}
+
+.hover-brighten:hover {
+  filter: brightness(1.2);
+}
+
+/* ===== EFECTOS DE LOADING Y ESTADOS ===== */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.ripple-effect:active::after {
+  width: 300px;
+  height: 300px;
+  transition: width 0s, height 0s;
+}
+
+/* ===== GRADIENTES PERSONALIZADOS ===== */
+.gradient-primary {
+  background: linear-gradient(
+    135deg,
+    var(--primary-500) 0%,
+    var(--primary-600) 50%,
+    var(--primary-700) 100%
+  );
+}
+
+.gradient-secondary {
+  background: linear-gradient(
+    135deg,
+    var(--secondary-500) 0%,
+    var(--secondary-600) 100%
+  );
+}
+
+.gradient-accent {
+  background: linear-gradient(
+    135deg,
+    var(--accent-500) 0%,
+    var(--accent-600) 100%
+  );
+}
+
+.gradient-rainbow {
+  background: linear-gradient(
+    45deg,
+    #ff6b6b,
+    #4ecdc4,
+    #45b7d1,
+    #96ceb4,
+    #ffeaa7,
+    #dda0dd
+  );
+  background-size: 300% 300%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    var(--primary-500),
+    var(--accent-500)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===== NAVEGACIÓN Y MENÚS ===== */
+.nav-dropdown {
+  transform: translateY(-10px);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.nav-dropdown.show {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu-overlay {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ===== EFECTOS DE PARTÍCULAS ===== */
+.particles-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: float 3s ease-in-out infinite;
+}
+
+.particle:nth-child(2) { animation-delay: 0.5s; }
+.particle:nth-child(3) { animation-delay: 1s; }
+.particle:nth-child(4) { animation-delay: 1.5s; }
+.particle:nth-child(5) { animation-delay: 2s; }
+.particle:nth-child(6) { animation-delay: 2.5s; }
+
+/* ===== SOMBRAS PERSONALIZADAS ===== */
+.shadow-soft {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-medium {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.shadow-hard {
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.shadow-glow-primary {
+  box-shadow: 0 0 30px rgba(var(--primary-rgb), 0.3);
+}
+
+.shadow-glow-secondary {
+  box-shadow: 0 0 30px rgba(var(--secondary-rgb), 0.3);
+}
+
+.shadow-glow-accent {
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.3);
+}
+
+.shadow-3xl {
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== UTILIDADES DE LAYOUT ===== */
+.full-screen {
+  width: 100vw;
+  height: 100vh;
+}
+
+.center-absolute {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.center-flex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== RESPONSIVE HELPERS ===== */
+@media (max-width: 768px) {
+  .glass-nav {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .mobile-menu-overlay {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .hide-mobile {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .hide-desktop {
+    display: none;
+  }
+}
+
+/* ===== ACCESIBILIDAD ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .animate-pulse-gentle,
+  .animate-glow,
+  .animate-float,
+  .animate-bounce-gentle,
+  .animate-wiggle,
+  .animate-shimmer,
+  .animate-gradient-shift {
+    animation: none;
+  }
+  
+  .loading-shimmer {
+    animation: none;
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+@media (prefers-contrast: high) {
+  .glass-nav,
+  .glass-button,
+  .glass-card {
+    border-width: 2px;
+    border-color: currentColor;
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  .glass-nav::before,
+  .glass-button::before {
+    display: none;
+  }
+}
+
+/* ===== MODO OSCURO ===== */
+@media (prefers-color-scheme: dark) {
+  .glass-button::before {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.02) 50%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+  }
+  
+  .glass-card {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ===== ESTILOS DE IMPRESIÓN ===== */
+@media print {
+  .glass-nav,
+  .glass-button,
+  .glass-card {
+    background: white !important;
+    color: black !important;
+    border: 1px solid black !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  
+  .animate-pulse-gentle,
+  .animate-glow,
+  .animate-float,
+  .animate-bounce-gentle,
+  .animate-wiggle,
+  .animate-shimmer,
+  .animate-gradient-shift {
+    animation: none !important;
+  }
+  
+  .shadow-soft,
+  .shadow-medium,
+  .shadow-hard,
+  .shadow-glow-primary,
+  .shadow-glow-secondary,
+  .shadow-glow-accent,
+  .shadow-3xl {
+    box-shadow: none !important;
+  }
+}
+
+/* ===== FOCUS STATES MEJORADOS ===== */
+.focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid rgba(var(--primary-rgb), 0.6);
+  outline-offset: 2px;
+}
+
+/* ===== SCROLLBAR PERSONALIZADA ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== SELECTION PERSONALIZADA ===== */
+::selection {
+  background: rgba(var(--primary-rgb), 0.3);
+  color: white;
+}
+
+::-moz-selection {
+  background: rgba(var(--primary-rgb), 0.3);
+  color: white;
+}
+
+
+================================================
+FILE: src/app/layout.tsx
+================================================
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
+
+export const metadata: Metadata = {
+  title: 'Intelcobro - Conecta con el futuro de la cobranza',
+  description: 'Especialistas en gestión de cobranza inteligente con tecnología avanzada. Recuperamos tu cartera con estrategias personalizadas y resultados garantizados.',
+  keywords: ['cobranza', 'gestión de cartera', 'recuperación', 'Ecuador', 'tecnología financiera'],
+  authors: [{ name: 'Intelcobro S.A.' }],
+  creator: 'Intelcobro S.A.',
+  publisher: 'Intelcobro S.A.',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://intelcobro.com'),
+  openGraph: {
+    title: 'Intelcobro - Conecta con el futuro de la cobranza',
+    description: 'Especialistas en gestión de cobranza inteligente con tecnología avanzada.',
+    url: 'https://intelcobro.com',
+    siteName: 'Intelcobro',
+    images: [
+      {
+        url: '/images/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Intelcobro - Gestión de cobranza inteligente',
+      },
+    ],
+    locale: 'es_EC',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Intelcobro - Conecta con el futuro de la cobranza',
+    description: 'Especialistas en gestión de cobranza inteligente con tecnología avanzada.',
+    images: ['/images/twitter-image.jpg'],
+    creator: '@intelcobro',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'google-verification-code',
+    yandex: 'yandex-verification-code',
+  },
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="es" className={inter.variable}>
+      <head>
+        {/* Preconnect para optimización */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        
+        {/* Manifest para PWA */}
+        <link rel="manifest" href="/manifest.json" />
+        
+        {/* Icons */}
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        
+        {/* Theme color para navegadores móviles */}
+        <meta name="theme-color" content="#e74c3c" />
+        <meta name="msapplication-TileColor" content="#e74c3c" />
+        
+        {/* Viewport optimizado */}
+        <meta 
+          name="viewport" 
+          content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" 
+        />
+        
+        {/* Preload de recursos críticos */}
+        <link 
+          rel="preload" 
+          href="/videos/professional-woman-idle.mp4" 
+          as="video" 
+          type="video/mp4"
+        />
+        
+        {/* DNS prefetch para APIs externas */}
+        <link rel="dns-prefetch" href="//api.intelcobro.com" />
+        
+        {/* Structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "Intelcobro S.A.",
+              "url": "https://intelcobro.com",
+              "logo": "https://intelcobro.com/images/logo.png",
+              "description": "Empresa especializada en gestión de cobranza inteligente",
+              "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Av. Principal 123",
+                "addressLocality": "Quito",
+                "addressRegion": "Pichincha",
+                "postalCode": "170501",
+                "addressCountry": "EC"
+              },
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+593-2-345-6789",
+                "contactType": "customer service",
+                "availableLanguage": "Spanish"
+              },
+              "sameAs": [
+                "https://www.linkedin.com/company/intelcobro",
+                "https://www.facebook.com/intelcobro"
+              ]
+            })
+          }}
+        />
+      </head>
+      <body 
+        className={`${inter.className} font-sans antialiased bg-white text-gray-900`}
+        suppressHydrationWarning
+      >
+        {/* Skip to main content para accesibilidad */}
+        <a 
+          href="#main-content" 
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-white px-4 py-2 rounded-md z-50"
+        >
+          Saltar al contenido principal
+        </a>
+        
+        {/* Contenido principal */}
+        <div id="main-content" className="min-h-screen flex flex-col">
+          {children}
+        </div>
+        
+        {/* Scripts de analytics y tracking */}
+        {process.env.NODE_ENV === 'production' && (
+          <>
+            {/* Google Analytics */}
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+                `,
+              }}
+            />
+            
+            {/* Hotjar o similar para heatmaps */}
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  (function(h,o,t,j,a,r){
+                    h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+                    h._hjSettings={hjid:${process.env.NEXT_PUBLIC_HOTJAR_ID},hjsv:6};
+                    a=o.getElementsByTagName('head')[0];
+                    r=o.createElement('script');r.async=1;
+                    r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+                    a.appendChild(r);
+                  })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+                `,
+              }}
+            />
+          </>
+        )}
+        
+        {/* Service Worker para PWA */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
+              }
+            `,
+          }}
+        />
+      </body>
+    </html>
+  )
+}
+
+
+================================================
+FILE: src/app/page.tsx
+================================================
+'use client'
+
+import { Suspense } from 'react'
+import { Header } from '@/components/layout/Header'
+import { HeroSection } from '@/components/sections/HeroSection'
+import contentData from '@/data/content.json'
+import type { VideoConfig, HeroContent } from '@/types'
+
+// Loading component para Suspense - Completamente responsive
+function HeroSectionSkeleton() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center pt-14 sm:pt-16 lg:pt-20 px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-5rem)]">
+          {/* Skeleton del contenido - Completamente responsive */}
+          <div className="space-y-6 sm:space-y-8 text-center lg:text-left order-2 lg:order-1">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="h-10 sm:h-12 md:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse" />
+              <div className="h-10 sm:h-12 md:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse" />
+              <div className="h-10 sm:h-12 md:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse" />
+            </div>
+            <div className="h-6 sm:h-7 lg:h-8 bg-white/10 rounded-lg animate-pulse w-3/4 mx-auto lg:mx-0" />
+            <div className="h-4 sm:h-5 lg:h-6 bg-white/10 rounded-lg animate-pulse w-full" />
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
+              <div className="h-12 sm:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse w-full sm:w-40" />
+              <div className="h-12 sm:h-14 lg:h-16 bg-white/10 rounded-lg animate-pulse w-full sm:w-32" />
+            </div>
+          </div>
+          
+          {/* Skeleton del video - Completamente responsive */}
+          <div className="flex justify-center order-1 lg:order-2 mb-8 lg:mb-0">
+            <div className="aspect-square w-64 sm:w-72 md:w-80 lg:w-96 bg-white/10 rounded-full animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function HomePage() {
+  // Extraer datos del contenido
+  const { home } = contentData
+  const { hero, navigation } = home
+
+  // Configuración del video desde el hero
+  const videoConfig: VideoConfig = {
+    idle: hero.professionalVideo.idle,
+    talking: hero.professionalVideo.talking,
+    poster: hero.professionalVideo.poster,
+    autoPlay: hero.professionalVideo.autoPlay,
+    loop: hero.professionalVideo.loop,
+    muted: hero.professionalVideo.muted,
+    controls: hero.professionalVideo.controls,
+    playsInline: hero.professionalVideo.playsInline,
+    removeBackground: hero.professionalVideo.removeBackground,
+    backgroundType: hero.professionalVideo.backgroundType as 'black' | 'white' | 'transparent',
+  }
+
+  // Contenido del hero (sin el video)
+  const heroContent: HeroContent = {
+    title: hero.title,
+    subtitle: hero.subtitle,
+    description: hero.description,
+    ctaText: hero.ctaText,
+    ctaLink: hero.ctaLink,
+    backgroundEffect: hero.backgroundEffect as 'aurora' | 'water' | 'particles' | 'gradient',
+  }
+
+  return (
+    <>
+      {/* Header fijo */}
+      <Header
+        navigationItems={navigation.items}
+        logo={navigation.logo}
+        brand={navigation.brand}
+      />
+
+      {/* Contenido principal - Sin spacer adicional */}
+      <main className="relative">
+        <Suspense fallback={<HeroSectionSkeleton />}>
+          <HeroSection
+            content={heroContent}
+            videoConfig={videoConfig}
+          />
+        </Suspense>
+        
+        {/* Aquí irán las demás secciones cuando se implementen */}
+        {/* 
+        <Suspense fallback={<SectionSkeleton />}>
+          <ServicesSection />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <AboutSection />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <ContactSection />
+        </Suspense>
+        */}
+      </main>
+
+      {/* Footer se agregará en futuras iteraciones */}
+      {/* 
+      <Footer />
+      */}
+    </>
+  )
+}
+
+
+================================================
+FILE: src/components/backgrounds/AuroraBackground.tsx
+================================================
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import { cn } from '@/lib/utils'
+import { useUIStore } from '@/lib/store'
+
+interface AuroraBackgroundProps {
+  className?: string
+  intensity?: 'low' | 'medium' | 'high'
+  colors?: string[]
+  speed?: 'slow' | 'normal' | 'fast'
+  blur?: number
+}
+
+export function AuroraBackground({
+  className,
+  intensity = 'medium',
+  colors = [
+    'rgba(147, 197, 253, 0.3)', // blue-300
+    'rgba(196, 181, 253, 0.3)', // purple-300
+    'rgba(249, 168, 212, 0.3)', // pink-300
+    'rgba(252, 165, 165, 0.3)', // red-300
+    'rgba(253, 186, 116, 0.3)', // orange-300
+  ],
+  speed = 'normal',
+  blur = 50,
+}: AuroraBackgroundProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animationFrameRef = useRef<number | null>(null)
+  const { reducedMotion } = useUIStore()
+  const [isVisible, setIsVisible] = useState(true)
+
+  // Configuración basada en intensidad
+  const config = {
+    low: { bands: 3, opacity: 0.2, movement: 0.5 },
+    medium: { bands: 5, opacity: 0.4, movement: 1 },
+    high: { bands: 7, opacity: 0.6, movement: 1.5 },
+  }[intensity]
+
+  // Configuración de velocidad
+  const speedMultiplier = {
+    slow: 0.5,
+    normal: 1,
+    fast: 1.5,
+  }[speed]
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || reducedMotion) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    let time = 0
+    const waves: Array<{
+      x: number
+      y: number
+      width: number
+      height: number
+      speed: number
+      color: string
+      angle: number
+      opacity: number
+    }> = []
+
+    // Función para redimensionar canvas
+    const resizeCanvas = () => {
+      const rect = canvas.getBoundingClientRect()
+      const devicePixelRatio = window.devicePixelRatio || 1
+      
+      canvas.width = rect.width * devicePixelRatio
+      canvas.height = rect.height * devicePixelRatio
+      
+      ctx.scale(devicePixelRatio, devicePixelRatio)
+      canvas.style.width = rect.width + 'px'
+      canvas.style.height = rect.height + 'px'
+    }
+
+    // Inicializar ondas aurora
+    const initializeWaves = () => {
+      waves.length = 0
+      const canvasWidth = canvas.offsetWidth
+      const canvasHeight = canvas.offsetHeight
+
+      for (let i = 0; i < config.bands; i++) {
+        // Asegurar que siempre hay un color válido
+        const colorIndex = i % colors.length
+        const selectedColor = colors[colorIndex] || 'rgba(147, 197, 253, 0.3)'
+        
+        waves.push({
+          x: Math.random() * canvasWidth,
+          y: (canvasHeight / config.bands) * i + Math.random() * 100,
+          width: canvasWidth * (1.5 + Math.random() * 2),
+          height: 80 + Math.random() * 120,
+          speed: (0.5 + Math.random() * 1) * speedMultiplier,
+          color: selectedColor,
+          angle: Math.random() * Math.PI * 2,
+          opacity: config.opacity * (0.7 + Math.random() * 0.6),
+        })
+      }
+    }
+
+    // Función de animación
+    const animate = () => {
+      if (!isVisible || reducedMotion) return
+
+      const canvasWidth = canvas.offsetWidth
+      const canvasHeight = canvas.offsetHeight
+
+      // Limpiar canvas
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight)
+
+      // Dibujar cada banda de aurora
+      waves.forEach((wave, index) => {
+        // Actualizar posición
+        wave.x += wave.speed * config.movement
+        wave.angle += 0.01 * wave.speed
+
+        // Reiniciar onda cuando sale de pantalla
+        if (wave.x > canvasWidth + wave.width) {
+          wave.x = -wave.width
+          wave.y = (canvasHeight / config.bands) * index + Math.random() * 100
+        }
+
+        // Crear gradiente
+        const gradient = ctx.createLinearGradient(
+          wave.x,
+          wave.y,
+          wave.x + wave.width,
+          wave.y + wave.height
+        )
+
+        const baseColor = wave.color.replace(/[\d.]+\)$/g, `${wave.opacity})`)
+        gradient.addColorStop(0, 'transparent')
+        gradient.addColorStop(0.3, baseColor)
+        gradient.addColorStop(0.7, baseColor)
+        gradient.addColorStop(1, 'transparent')
+
+        // Configurar filtros
+        ctx.filter = `blur(${blur}px)`
+        ctx.globalCompositeOperation = 'screen'
+
+        // Dibujar onda
+        ctx.fillStyle = gradient
+        ctx.save()
+        ctx.translate(wave.x + wave.width / 2, wave.y + wave.height / 2)
+        ctx.rotate(Math.sin(wave.angle) * 0.1)
+        ctx.scale(1 + Math.sin(time * 0.001 + index) * 0.1, 1)
+        
+        ctx.beginPath()
+        ctx.ellipse(
+          -wave.width / 2,
+          -wave.height / 2,
+          wave.width / 2,
+          wave.height / 2,
+          0,
+          0,
+          Math.PI * 2
+        )
+        ctx.fill()
+        ctx.restore()
+
+        // Resetear filtros
+        ctx.filter = 'none'
+        ctx.globalCompositeOperation = 'source-over'
+      })
+
+      time += 16 * speedMultiplier
+      animationFrameRef.current = requestAnimationFrame(animate)
+    }
+
+    // Configurar observador de intersección para optimización
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setIsVisible(entry.isIntersecting)
+        })
+      },
+      { threshold: 0.1 }
+    )
+
+    // Inicializar
+    resizeCanvas()
+    initializeWaves()
+    if (!reducedMotion) {
+      animate()
+    }
+    observer.observe(canvas)
+
+    // Event listeners
+    const handleResize = () => {
+      resizeCanvas()
+      initializeWaves()
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    // Cleanup
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+      observer.disconnect()
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [intensity, speed, blur, reducedMotion, isVisible, colors, config, speedMultiplier])
+
+  // Renderizar versión estática si se prefiere movimiento reducido
+  if (reducedMotion) {
+    return (
+      <div className={cn("absolute inset-0 overflow-hidden", className)}>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20" />
+        <div className="absolute inset-0 bg-gradient-to-tl from-orange-500/10 via-red-500/10 to-blue-500/10" />
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn("absolute inset-0 overflow-hidden", className)}>
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full"
+        style={{
+          background: 'linear-gradient(135deg, #1e3a8a 0%, #312e81 25%, #7c3aed 50%, #be185d 75%, #dc2626 100%)',
+        }}
+      />
+      
+      {/* Overlay gradient para mejorar legibilidad */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10" />
+      
+      {/* Efectos adicionales de partículas (opcional) */}
+      <div className="absolute inset-0 opacity-30">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Componente especializado para hero sections
+export function HeroAuroraBackground({ className, ...props }: AuroraBackgroundProps) {
+  return (
+    <AuroraBackground
+      intensity="high"
+      speed="normal"
+      colors={[
+        'rgba(59, 130, 246, 0.4)',   // blue-500
+        'rgba(147, 51, 234, 0.4)',   // purple-600
+        'rgba(236, 72, 153, 0.4)',   // pink-500
+        'rgba(239, 68, 68, 0.4)',    // red-500
+        'rgba(245, 158, 11, 0.4)',   // amber-500
+      ]}
+      className={cn("z-0", className)}
+      {...props}
+    />
+  )
+}
+
+// Componente para fondos sutiles
+export function SubtleAuroraBackground({ className, ...props }: AuroraBackgroundProps) {
+  return (
+    <AuroraBackground
+      intensity="low"
+      speed="slow"
+      blur={80}
+      colors={[
+        'rgba(147, 197, 253, 0.15)',  // blue-300
+        'rgba(196, 181, 253, 0.15)',  // purple-300
+        'rgba(249, 168, 212, 0.15)',  // pink-300
+      ]}
+      className={cn("z-0", className)}
+      {...props}
+    />
+  )
+}
+
+
+================================================
+FILE: src/components/layout/Header.tsx
+================================================
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { Menu, X, ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Button, NavButton, IconButton } from '@/components/ui/Button'
+import { useUIStore } from '@/lib/store'
+
+interface HeaderProps {
+  navigationItems: Array<{
+    id: string
+    label: string
+    href: string
+    active?: boolean
+    submenu?: Array<{
+      id: string
+      label: string
+      href: string
+      description?: string
+    }>
+  }>
+  logo?: string
+  brand?: string
+}
+
+export function Header({ navigationItems, logo, brand = "Intelcobro" }: HeaderProps) {
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null)
+  const { sidebarOpen, setSidebarOpen } = useUIStore()
+  const pathname = usePathname()
+
+  // Suprimir warning de variables no usadas
+  const _ = { sidebarOpen, setSidebarOpen }
+
+  // Detectar scroll para efectos de header
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Cerrar menú móvil al cambiar de ruta
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+    setActiveSubmenu(null)
+  }, [pathname])
+
+  // Prevenir scroll del body cuando el menú móvil está abierto
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isMobileMenuOpen])
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen)
+  }
+
+  const handleSubmenuToggle = (itemId: string) => {
+    setActiveSubmenu(activeSubmenu === itemId ? null : itemId)
+  }
+
+  return (
+    <>
+      <header
+        className={cn(
+          'fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out',
+          'backdrop-blur-xl border-b',
+          isScrolled 
+            ? 'glass-nav-solid bg-white/15 shadow-2xl border-white/20 backdrop-blur-2xl' 
+            : 'glass-nav-transparent bg-transparent border-transparent'
+        )}
+      >
+        <div className="container mx-auto px-2 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between h-16 sm:h-18 lg:h-22">
+            
+            {/* Logo solo - Sin padding, más grande */}
+            <div className="flex items-center">
+              <Link 
+                href="/" 
+                className="group transition-all duration-300 hover:scale-105"
+              >
+                {logo && (
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28">
+                    <img
+                      src={logo}
+                      alt={`${brand} Logo`}
+                      className="w-full h-full object-contain drop-shadow-lg group-hover:drop-shadow-xl transition-all duration-300"
+                    />
+                    {/* Glow effect behind logo */}
+                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+                  </div>
+                )}
+              </Link>
+            </div>
+
+            {/* Navegación Desktop - Centrada */}
+            <nav className="hidden lg:flex items-center justify-center flex-1 max-w-2xl mx-8">
+              <div className="flex items-center space-x-1">
+                {navigationItems.map((item) => (
+                  <div key={item.id} className="relative group">
+                    <Link href={item.href}>
+                      <NavButton
+                        active={pathname === item.href}
+                        className="px-4 py-2 text-sm font-semibold"
+                      >
+                        <span className="flex items-center gap-1">
+                          {item.label}
+                          {item.submenu && (
+                            <ChevronDown 
+                              size={14} 
+                              className="transition-transform duration-300 group-hover:rotate-180" 
+                            />
+                          )}
+                        </span>
+                      </NavButton>
+                    </Link>
+                    
+                    {/* Submenu dropdown */}
+                    {item.submenu && (
+                      <div className="absolute top-full left-0 mt-2 w-64 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                        <div className="p-2">
+                          {item.submenu.map((subItem) => (
+                            <Link
+                              key={subItem.id}
+                              href={subItem.href}
+                              className="block p-3 rounded-lg text-white hover:bg-white/20 transition-all duration-200 group/sub"
+                            >
+                              <div className="font-medium text-sm group-hover/sub:text-primary-200">
+                                {subItem.label}
+                              </div>
+                              {subItem.description && (
+                                <div className="text-xs text-white/70 mt-1">
+                                  {subItem.description}
+                                </div>
+                              )}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </nav>
+
+            {/* Botón de acción Desktop - Solo Glass Contáctanos */}
+            <div className="hidden lg:flex items-center">
+              <Button
+                variant="glass"
+                size="default"
+                className="font-semibold px-6"
+              >
+                Contáctanos
+              </Button>
+            </div>
+
+            {/* Botón menú móvil */}
+            <div className="lg:hidden">
+              <IconButton
+                icon={
+                  <div className="relative">
+                    <Menu 
+                      size={20} 
+                      className={cn(
+                        "transition-all duration-300",
+                        isMobileMenuOpen ? "opacity-0 rotate-180" : "opacity-100 rotate-0"
+                      )} 
+                    />
+                    <X 
+                      size={20} 
+                      className={cn(
+                        "absolute inset-0 transition-all duration-300",
+                        isMobileMenuOpen ? "opacity-100 rotate-0" : "opacity-0 -rotate-180"
+                      )} 
+                    />
+                  </div>
+                }
+                onClick={toggleMobileMenu}
+                className="text-white border-white/30 hover:bg-white/20"
+                size="icon-sm"
+                tooltip={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+              />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Menú móvil overlay */}
+      {isMobileMenuOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className={cn(
+              "fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden",
+              "animate-fadeIn"
+            )}
+            onClick={toggleMobileMenu}
+          />
+          
+          {/* Panel del menú */}
+          <div
+            className={cn(
+              'fixed top-16 sm:top-18 right-0 w-72 sm:w-80 max-w-[85vw] h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] z-50 lg:hidden',
+              'glass bg-white/15 backdrop-blur-2xl border-l border-white/30',
+              'transform transition-all duration-500 ease-out shadow-2xl',
+              'animate-slideInRight'
+            )}
+          >
+            <div className="flex flex-col h-full">
+              
+              {/* Navegación móvil */}
+              <nav className="flex-1 px-4 sm:px-6 py-6 sm:py-8 overflow-y-auto">
+                <div className="space-y-2">
+                  {navigationItems.map((item) => (
+                    <div key={item.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Link
+                          href={item.href}
+                          onClick={toggleMobileMenu}
+                          className={cn(
+                            'flex-1 px-3 sm:px-4 py-3 sm:py-4 rounded-xl text-white font-semibold transition-all duration-300',
+                            'hover:bg-white/20 hover:backdrop-blur-sm hover:shadow-lg',
+                            'border border-transparent hover:border-white/30',
+                            'text-sm sm:text-base',
+                            pathname === item.href 
+                              ? 'bg-white/20 border-white/30 shadow-lg' 
+                              : 'hover:translate-x-2'
+                          )}
+                        >
+                          {item.label}
+                        </Link>
+                        
+                        {item.submenu && (
+                          <button
+                            onClick={() => handleSubmenuToggle(item.id)}
+                            className="p-2 text-white/70 hover:text-white transition-colors"
+                          >
+                            <ChevronDown 
+                              size={18} 
+                              className={cn(
+                                "transition-transform duration-300",
+                                activeSubmenu === item.id ? "rotate-180" : "rotate-0"
+                              )}
+                            />
+                          </button>
+                        )}
+                      </div>
+                      
+                      {/* Submenu móvil */}
+                      {item.submenu && activeSubmenu === item.id && (
+                        <div className="ml-3 sm:ml-4 space-y-1 animate-slideDown">
+                          {item.submenu.map((subItem) => (
+                            <Link
+                              key={subItem.id}
+                              href={subItem.href}
+                              onClick={toggleMobileMenu}
+                              className="block px-3 sm:px-4 py-2 sm:py-3 text-white/80 hover:text-white bg-white/5 hover:bg-white/15 rounded-lg transition-all duration-200 text-sm"
+                            >
+                              <div className="font-medium">{subItem.label}</div>
+                              {subItem.description && (
+                                <div className="text-xs text-white/60 mt-1">
+                                  {subItem.description}
+                                </div>
+                              )}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </nav>
+
+              {/* Botón de acción móvil - Solo Glass Contáctanos */}
+              <div className="px-4 sm:px-6 py-4 sm:py-6 border-t border-white/20">
+                <Button
+                  variant="glass"
+                  size="lg"
+                  className="w-full justify-center font-semibold"
+                  onClick={toggleMobileMenu}
+                >
+                  Contáctanos
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Spacer para evitar que el contenido se oculte bajo el header fijo - REMOVIDO */}
+      {/* <div className="h-14 sm:h-16 lg:h-20" /> */}
+    </>
+  )
+}
+
+
+================================================
+FILE: src/components/layout/Navigation.tsx
+================================================
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import { NavButton } from '@/components/ui/Button'
+import type { NavigationItem } from '@/types'
+
+interface NavigationProps {
+  items: NavigationItem[]
+  orientation?: 'horizontal' | 'vertical'
+  variant?: 'glass' | 'solid' | 'minimal'
+  className?: string
+  itemClassName?: string
+  onItemClick?: (item: NavigationItem) => void
+}
+
+export function Navigation({
+  items,
+  orientation = 'horizontal',
+  variant = 'glass',
+  className,
+  itemClassName,
+  onItemClick,
+}: NavigationProps) {
+  const pathname = usePathname()
+
+  const isActiveItem = (item: NavigationItem): boolean => {
+    if (item.href === '/') {
+      return pathname === '/'
+    }
+    return pathname.startsWith(item.href)
+  }
+
+  const handleItemClick = (item: NavigationItem) => {
+    onItemClick?.(item)
+  }
+
+  const getItemStyles = (item: NavigationItem) => {
+    const isActive = isActiveItem(item)
+    
+    const baseStyles = cn(
+      'transition-all duration-300 ease-out',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+      itemClassName
+    )
+
+    switch (variant) {
+      case 'glass':
+        return cn(
+          baseStyles,
+          'text-white font-medium',
+          'hover:bg-white/10 hover:backdrop-blur-sm',
+          'border border-transparent hover:border-white/20',
+          isActive && 'bg-white/20 border-white/30 shadow-lg'
+        )
+      
+      case 'solid':
+        return cn(
+          baseStyles,
+          'text-gray-700 dark:text-gray-200 font-medium',
+          'hover:bg-primary-50 dark:hover:bg-primary-900/20',
+          'hover:text-primary-600 dark:hover:text-primary-400',
+          isActive && 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+        )
+      
+      case 'minimal':
+        return cn(
+          baseStyles,
+          'text-gray-600 dark:text-gray-300 font-medium',
+          'hover:text-gray-900 dark:hover:text-white',
+          'relative',
+          isActive && 'text-primary-600 dark:text-primary-400'
+        )
+      
+      default:
+        return baseStyles
+    }
+  }
+
+  const containerStyles = cn(
+    'flex',
+    orientation === 'horizontal' 
+      ? 'items-center space-x-1' 
+      : 'flex-col space-y-2',
+    className
+  )
+
+  return (
+    <nav className={containerStyles} role="navigation">
+      {items.map((item) => {
+        const isActive = isActiveItem(item)
+        
+        const linkContent = (
+          <span className={cn(
+            'block px-4 py-2 rounded-lg text-sm',
+            getItemStyles(item),
+            // Indicador visual para item activo en variante minimal
+            variant === 'minimal' && isActive && 
+            'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary-500'
+          )}>
+            {item.icon && (
+              <span className="mr-2 inline-flex">{item.icon}</span>
+            )}
+            {item.label}
+          </span>
+        )
+
+        if (item.external) {
+          return (
+            <a
+              key={item.id}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative group"
+              onClick={() => handleItemClick(item)}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              {linkContent}
+              {/* Indicador de enlace externo */}
+              <span className="sr-only">(abre en nueva pestaña)</span>
+            </a>
+          )
+        }
+
+        if (variant === 'glass') {
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              onClick={() => handleItemClick(item)}
+            >
+              <NavButton
+                active={isActive}
+                className="text-sm font-medium"
+              >
+                {item.icon && (
+                  <span className="mr-2">{item.icon}</span>
+                )}
+                {item.label}
+              </NavButton>
+            </Link>
+          )
+        }
+
+        return (
+          <Link
+            key={item.id}
+            href={item.href}
+            className="relative group"
+            onClick={() => handleItemClick(item)}
+            aria-current={isActive ? 'page' : undefined}
+          >
+            {linkContent}
+            
+            {/* Efecto de hover para variante minimal */}
+            {variant === 'minimal' && (
+              <span className={cn(
+                'absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all duration-300',
+                'group-hover:w-full',
+                isActive && 'w-full'
+              )} />
+            )}
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}
+
+// Componente especializado para navegación principal
+export function MainNavigation({ items, className, ...props }: Omit<NavigationProps, 'variant'>) {
+  return (
+    <Navigation
+      items={items}
+      variant="glass"
+      orientation="horizontal"
+      className={cn('hidden lg:flex', className)}
+      {...props}
+    />
+  )
+}
+
+// Componente para navegación móvil
+export function MobileNavigation({ items, className, ...props }: Omit<NavigationProps, 'variant' | 'orientation'>) {
+  return (
+    <Navigation
+      items={items}
+      variant="glass"
+      orientation="vertical"
+      className={cn('lg:hidden', className)}
+      itemClassName="w-full text-left"
+      {...props}
+    />
+  )
+}
+
+// Componente para breadcrumbs
+interface BreadcrumbItem {
+  id: string
+  label: string
+  href?: string
+}
+
+interface BreadcrumbProps {
+  items: BreadcrumbItem[]
+  separator?: React.ReactNode
+  className?: string
+}
+
+export function Breadcrumb({ 
+  items, 
+  separator = '/', 
+  className 
+}: BreadcrumbProps) {
+  return (
+    <nav 
+      className={cn('flex items-center space-x-2 text-sm', className)}
+      aria-label="Breadcrumb"
+    >
+      {items.map((item, index) => (
+        <div key={item.id} className="flex items-center">
+          {index > 0 && (
+            <span className="mx-2 text-gray-400">{separator}</span>
+          )}
+          
+          {item.href && index < items.length - 1 ? (
+            <Link
+              href={item.href}
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              {item.label}
+            </Link>
+          ) : (
+            <span className="text-gray-900 font-medium">
+              {item.label}
+            </span>
+          )}
+        </div>
+      ))}
+    </nav>
+  )
+}
+
+
+================================================
+FILE: src/components/sections/HeroSection.tsx
+================================================
+'use client'
+
+import { useRef } from 'react'
+import { motion, useInView, type Variants } from 'framer-motion'
+import { Mic, MicOff } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { CTAButton, IconButton } from '@/components/ui/Button'
+import { VideoPlayer } from '@/components/ui/VideoPlayer'
+import { HeroAuroraBackground } from '@/components/backgrounds/AuroraBackground'
+import { useVideoState } from '@/hooks/useVideoState'
+import { useContactStore } from '@/lib/store'
+import type { HeroContent, VideoConfig } from '@/types'
+
+interface HeroSectionProps {
+  content: HeroContent
+  videoConfig: VideoConfig
+  className?: string
+}
+
+export function HeroSection({ content, videoConfig, className }: HeroSectionProps) {
+  const sectionRef = useRef<HTMLElement>(null)
+  const isInView = useInView(sectionRef, { once: true, margin: "-10%" })
+  
+  const {
+    currentVideo,
+    isRecording,
+    isProcessing,
+    startConversation,
+    stopRecording,
+    onUserInteraction,
+  } = useVideoState({
+    autoReturnToIdle: true,
+    idleTimeout: 3000,
+  })
+
+  const { hasStartedConversation } = useContactStore()
+
+  // Manejar click en botón de contacto (micrófono)
+  const handleContactClick = () => {
+    if (!isRecording && !isProcessing) {
+      startConversation()
+    } else if (isRecording) {
+      stopRecording()
+    }
+  }
+
+  // Manejar interacciones generales del usuario
+  const handleUserInteraction = () => {
+    onUserInteraction()
+  }
+
+  // Animaciones con tipos correctos
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        staggerChildren: 0.2,
+      }
+    }
+  }
+
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1] // easeOutExpo
+      }
+    }
+  }
+
+  const videoVariants: Variants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.8,
+        ease: [0.22, 1, 0.36, 1] // easeOutExpo
+      }
+    }
+  }
+
+  return (
+    <section
+      ref={sectionRef}
+      className={cn(
+        "relative min-h-screen flex items-center justify-center overflow-hidden",
+        "bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900",
+        // Padding top responsive para compensar el header fijo
+        "pt-14 sm:pt-16 lg:pt-20",
+        // Padding responsivo general
+        "px-4 sm:px-6 lg:px-8",
+        className
+      )}
+      onClick={handleUserInteraction}
+    >
+      {/* Fondo Aurora */}
+      <HeroAuroraBackground />
+
+      {/* Contenido principal */}
+      <div className="relative z-10 container mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-5rem)]">
+          
+          {/* Contenido de texto */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate={isInView ? "visible" : "hidden"}
+            className="text-center lg:text-left space-y-6 sm:space-y-8 order-2 lg:order-1"
+          >
+            {/* Título principal */}
+            <motion.h1
+              variants={itemVariants}
+              className={cn(
+                "text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl",
+                "font-bold text-white leading-tight",
+                "drop-shadow-2xl"
+              )}
+            >
+              <span className="block">Conecta con el</span>
+              <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                futuro de la
+              </span>
+              <span className="block">cobranza</span>
+            </motion.h1>
+
+            {/* Subtítulo */}
+            {content.subtitle && (
+              <motion.p
+                variants={itemVariants}
+                className="text-lg sm:text-xl lg:text-2xl text-blue-100 font-light leading-relaxed"
+              >
+                {content.subtitle}
+              </motion.p>
+            )}
+
+            {/* Descripción */}
+            {content.description && (
+              <motion.p
+                variants={itemVariants}
+                className="text-base sm:text-lg text-blue-200/80 leading-relaxed max-w-2xl mx-auto lg:mx-0"
+              >
+                {content.description}
+              </motion.p>
+            )}
+
+            {/* Botones de acción */}
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start"
+            >
+              {/* Botón principal CTA */}
+              <CTAButton
+                size="xl"
+                className="shadow-2xl shadow-primary/25 w-full sm:w-auto"
+                onClick={handleContactClick}
+                leftIcon={
+                  isRecording ? (
+                    <MicOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                  ) : (
+                    <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )
+                }
+                animation={hasStartedConversation ? "none" : "glow"}
+              >
+                <span className="text-sm sm:text-base">
+                  {isRecording 
+                    ? "Terminar conversación" 
+                    : isProcessing 
+                      ? "Procesando..." 
+                      : content.ctaText
+                  }
+                </span>
+              </CTAButton>
+
+              {/* Botón secundario */}
+              <CTAButton
+                size="xl"
+                className="border-white/30 hover:border-white/50 bg-white/10 hover:bg-white/15 w-full sm:w-auto"
+              >
+                <span className="text-sm sm:text-base">Conocer más</span>
+              </CTAButton>
+            </motion.div>
+
+            {/* Indicadores de estado - Solo en desktop */}
+            <motion.div
+              variants={itemVariants}
+              className="hidden sm:flex items-center justify-center lg:justify-start space-x-4"
+            >
+              {/* Indicador de video actual */}
+              <div className="flex items-center space-x-2 text-sm text-blue-200/60">
+                <div className={cn(
+                  "w-2 h-2 rounded-full transition-colors duration-300",
+                  currentVideo === 'talking' ? "bg-green-400" : "bg-blue-400"
+                )} />
+                <span>
+                  {currentVideo === 'talking' ? "Hablando" : "En espera"}
+                </span>
+              </div>
+
+              {/* Indicador de grabación */}
+              {isRecording && (
+                <div className="flex items-center space-x-2 text-sm text-red-300">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span>Grabando</span>
+                </div>
+              )}
+
+              {/* Indicador de procesamiento */}
+              {isProcessing && (
+                <div className="flex items-center space-x-2 text-sm text-yellow-300">
+                  <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                  <span>Procesando</span>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+
+          {/* Video de la mujer profesional */}
+          <motion.div
+            variants={videoVariants}
+            initial="hidden"
+            animate={isInView ? "visible" : "hidden"}
+            className="relative order-1 lg:order-2 mb-8 lg:mb-0"
+          >
+            <div className="relative mx-auto max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
+              {/* Círculo decorativo de fondo */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-full blur-2xl sm:blur-3xl scale-110" />
+              
+              {/* Anillo exterior decorativo */}
+              <div className="absolute inset-0 rounded-full border border-white/20 sm:border-2 scale-105 animate-pulse-slow" />
+              
+              {/* Contenedor del video */}
+              <div className="relative aspect-square rounded-full overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-white/30">
+                <VideoPlayer
+                  config={videoConfig}
+                  className="w-full h-full"
+                  onLoad={() => console.log('Video cargado')}
+                  onError={(error) => console.error('Error en video:', error)}
+                />
+                
+                {/* Overlay sutil para mejor integración */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent pointer-events-none" />
+              </div>
+
+              {/* Efectos de partículas alrededor del video - Solo en desktop */}
+              <div className="absolute inset-0 pointer-events-none hidden lg:block">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-1 h-1 sm:w-2 sm:h-2 bg-white/30 rounded-full animate-float"
+                    style={{
+                      left: `${20 + (i * 45) % 60}%`,
+                      top: `${15 + (i * 23) % 70}%`,
+                      animationDelay: `${i * 0.8}s`,
+                      animationDuration: `${3 + (i % 3)}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Botón flotante de interacción */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 1, duration: 0.5 }}
+              className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4"
+            >
+              <IconButton
+                icon={
+                  isRecording ? (
+                    <MicOff className="w-4 h-4 sm:w-6 sm:h-6 text-red-300" />
+                  ) : (
+                    <Mic className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                  )
+                }
+                onClick={handleContactClick}
+                className={cn(
+                  "w-12 h-12 sm:w-16 sm:h-16 shadow-2xl",
+                  isRecording 
+                    ? "bg-red-500/20 border-red-400/50 animate-pulse" 
+                    : "bg-primary/20 border-primary/50 hover:bg-primary/30"
+                )}
+                tooltip={isRecording ? "Detener grabación" : "Iniciar conversación"}
+              />
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+
+
+
+      {/* Gradiente inferior para transición suave */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-32 bg-gradient-to-t from-white/5 to-transparent pointer-events-none" />
+    </section>
+  )
+}
+
+
+================================================
+FILE: src/components/ui/Button.tsx
+================================================
+'use client'
+
+import * as React from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from '@/lib/utils'
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ring-offset-background relative overflow-hidden group',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-lg hover:shadow-xl',
+        outline: 'border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-md hover:shadow-lg',
+        ghost: 'hover:bg-white/10 hover:text-white border border-transparent hover:border-white/30 backdrop-blur-sm',
+        link: 'text-primary underline-offset-4 hover:underline',
+        
+        // Glass variants mejorados
+        glass: cn(
+          'glass-button text-white border-2 border-white/20 hover:border-white/40',
+          'bg-white/10 hover:bg-white/20 backdrop-blur-xl',
+          'shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30',
+          'transform hover:scale-105 active:scale-95',
+          'before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent',
+          'before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700',
+          'after:absolute after:inset-0 after:rounded-xl after:border after:border-white/30 after:opacity-0 hover:after:opacity-100 after:transition-opacity after:duration-300'
+        ),
+        
+        'glass-primary': cn(
+          'glass-button text-white border-2 border-primary/40 hover:border-primary/60',
+          'bg-gradient-to-br from-primary/30 via-primary/20 to-primary/30',
+          'hover:from-primary/40 hover:via-primary/30 hover:to-primary/40',
+          'backdrop-blur-xl shadow-2xl shadow-primary/30 hover:shadow-3xl hover:shadow-primary/50',
+          'transform hover:scale-110 active:scale-95',
+          'before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-primary/20 before:to-transparent',
+          'before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700',
+          'after:absolute after:inset-0 after:rounded-xl after:bg-gradient-to-r after:from-primary/20 after:to-transparent after:opacity-0 hover:after:opacity-100 after:transition-opacity after:duration-300'
+        ),
+        
+        'glass-secondary': cn(
+          'glass-button text-white border-2 border-secondary/40 hover:border-secondary/60',
+          'bg-gradient-to-br from-secondary/30 via-secondary/20 to-secondary/30',
+          'hover:from-secondary/40 hover:via-secondary/30 hover:to-secondary/40',
+          'backdrop-blur-xl shadow-xl shadow-secondary/20 hover:shadow-2xl hover:shadow-secondary/40',
+          'transform hover:scale-105 active:scale-95'
+        ),
+        
+        'glass-accent': cn(
+          'glass-button text-white border-2 border-accent/40 hover:border-accent/60',
+          'bg-gradient-to-br from-accent/30 via-accent/20 to-accent/30',
+          'hover:from-accent/40 hover:via-accent/30 hover:to-accent/40',
+          'backdrop-blur-xl shadow-xl shadow-accent/20 hover:shadow-2xl hover:shadow-accent/40',
+          'transform hover:scale-105 active:scale-95'
+        ),
+        
+        // Variantes especiales
+        'gradient-primary': cn(
+          'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700',
+          'hover:from-primary-400 hover:via-primary-500 hover:to-primary-600',
+          'text-white shadow-xl shadow-primary/40 hover:shadow-2xl hover:shadow-primary/60',
+          'transform hover:scale-105 active:scale-95',
+          'before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/0 before:via-white/20 before:to-white/0',
+          'before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700'
+        ),
+        
+        'neon': cn(
+          'bg-transparent border-2 border-primary-400 text-primary-400',
+          'hover:bg-primary-400 hover:text-black hover:border-primary-300',
+          'shadow-lg shadow-primary-400/50 hover:shadow-xl hover:shadow-primary-400/80',
+          'transform hover:scale-105 active:scale-95',
+          'before:absolute before:inset-0 before:bg-primary-400/10 before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300'
+        ),
+      },
+      size: {
+        default: 'h-11 px-6 py-2.5',
+        sm: 'h-9 rounded-lg px-4 text-xs',
+        lg: 'h-13 rounded-xl px-8 text-base',
+        xl: 'h-16 rounded-2xl px-12 text-lg font-bold',
+        icon: 'h-11 w-11',
+        'icon-sm': 'h-9 w-9',
+        'icon-lg': 'h-13 w-13',
+        'icon-xl': 'h-16 w-16',
+      },
+      animation: {
+        none: '',
+        pulse: 'animate-pulse-gentle',
+        glow: 'animate-glow',
+        float: 'animate-float',
+        bounce: 'hover:animate-bounce-gentle',
+        wiggle: 'hover:animate-wiggle',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+      animation: 'none',
+    },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+  loading?: boolean
+  leftIcon?: React.ReactNode
+  rightIcon?: React.ReactNode
+  glowEffect?: boolean
+  rippleEffect?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ 
+    className, 
+    variant, 
+    size, 
+    animation,
+    loading = false,
+    leftIcon,
+    rightIcon,
+    children,
+    disabled,
+    glowEffect = false,
+    rippleEffect = true,
+    asChild = false,
+    onClick,
+    ...props 
+  }, ref) => {
+    const isDisabled = disabled || loading
+    const [ripples, setRipples] = React.useState<Array<{ id: number; x: number; y: number }>>([])
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (rippleEffect && !isDisabled) {
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        const newRipple = {
+          id: Date.now(),
+          x,
+          y,
+        }
+        setRipples(prev => [...prev, newRipple])
+        
+        // Remove ripple after animation
+        setTimeout(() => {
+          setRipples(prev => prev.filter(ripple => ripple.id !== newRipple.id))
+        }, 600)
+      }
+      
+      onClick?.(e)
+    }
+
+    const buttonContent = (
+      <>
+        {/* Ripple effects */}
+        {ripples.map(ripple => (
+          <span
+            key={ripple.id}
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              left: ripple.x - 10,
+              top: ripple.y - 10,
+            }}
+          >
+            <span className="absolute w-5 h-5 bg-white/30 rounded-full animate-ping" />
+          </span>
+        ))}
+        
+        {/* Glow effect */}
+        {glowEffect && (
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+        )}
+        
+        {/* Loading spinner */}
+        {loading && (
+          <svg
+            className="mr-2 h-4 w-4 animate-spin"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+        )}
+        
+        {/* Content */}
+        <span className="relative z-10 flex items-center justify-center">
+          {!loading && leftIcon && (
+            <span className="mr-2 flex-shrink-0 transition-transform group-hover:scale-110">
+              {leftIcon}
+            </span>
+          )}
+          <span className="flex-1">{children}</span>
+          {!loading && rightIcon && (
+            <span className="ml-2 flex-shrink-0 transition-transform group-hover:scale-110">
+              {rightIcon}
+            </span>
+          )}
+        </span>
+      </>
+    )
+
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, {
+        className: cn(buttonVariants({ variant, size, animation, className })),
+        ref,
+        onClick: handleClick,
+        ...props,
+      } as any)
+    }
+
+    return (
+      <button
+        className={cn(buttonVariants({ variant, size, animation, className }))}
+        ref={ref}
+        disabled={isDisabled}
+        onClick={handleClick}
+        {...props}
+      >
+        {buttonContent}
+      </button>
+    )
+  }
+)
+Button.displayName = 'Button'
+
+// Componente especializado para CTA con efectos avanzados
+export interface CTAButtonProps extends Omit<ButtonProps, 'variant'> {
+  glowEffect?: boolean
+  pulseOnHover?: boolean
+  magneticEffect?: boolean
+}
+
+export const CTAButton = React.forwardRef<HTMLButtonElement, CTAButtonProps>(
+  ({ 
+    glowEffect = true, 
+    pulseOnHover = true, 
+    magneticEffect = false,
+    className, 
+    animation, 
+    children,
+    onMouseMove,
+    onMouseLeave,
+    ...props 
+  }) => {
+    const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 })
+    const buttonRef = React.useRef<HTMLButtonElement>(null)
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (magneticEffect && buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        const x = e.clientX - rect.left - rect.width / 2
+        const y = e.clientY - rect.top - rect.height / 2
+        setMousePosition({ x: x * 0.3, y: y * 0.3 })
+      }
+      onMouseMove?.(e)
+    }
+
+    const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (magneticEffect) {
+        setMousePosition({ x: 0, y: 0 })
+      }
+      onMouseLeave?.(e)
+    }
+
+    return (
+      <Button
+        ref={buttonRef}
+        variant="gradient-primary"
+        size="lg"
+        animation={animation || (pulseOnHover ? 'pulse' : 'none')}
+        glowEffect={glowEffect}
+        className={cn(
+          'font-bold tracking-wide relative overflow-hidden',
+          'shadow-2xl shadow-primary/50 hover:shadow-3xl hover:shadow-primary/70',
+          'transition-all duration-500 ease-out',
+          magneticEffect && 'transition-transform duration-300 ease-out',
+          className
+        )}
+        style={magneticEffect ? {
+          transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`
+        } : undefined}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        {...props}
+      >
+        <span className="relative z-10">{children}</span>
+        
+        {/* Particle effect para CTA */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-white rounded-full animate-float"
+              style={{
+                left: `${20 + i * 15}%`,
+                top: `${30 + (i % 2) * 40}%`,
+                animationDelay: `${i * 0.2}s`,
+                animationDuration: '2s'
+              }}
+            />
+          ))}
+        </div>
+      </Button>
+    )
+  }
+)
+CTAButton.displayName = 'CTAButton'
+
+// Componente para botones de navegación mejorado
+export interface NavButtonProps extends Omit<ButtonProps, 'variant'> {
+  active?: boolean
+  hasSubmenu?: boolean
+}
+
+export const NavButton = React.forwardRef<HTMLButtonElement, NavButtonProps>(
+  ({ active = false, hasSubmenu = false, className, children, ...props }, ref) => {
+    return (
+      <Button
+        ref={ref}
+        variant={active ? 'glass-primary' : 'glass'}
+        size="default"
+        className={cn(
+          'relative font-semibold tracking-wide',
+          'transition-all duration-300 group/nav',
+          'hover:shadow-lg hover:shadow-white/20',
+          active && 'shadow-primary/30 ring-2 ring-primary/20',
+          // Efecto de línea inferior para navegación activa
+          active && 'after:absolute after:bottom-0 after:left-1/2 after:w-8 after:h-0.5 after:bg-primary-300 after:transform after:-translate-x-1/2 after:rounded-full',
+          className
+        )}
+        {...props}
+      >
+        <span className="relative z-10 flex items-center gap-2">
+          {children}
+          {hasSubmenu && (
+            <span className="opacity-70 transition-transform group-hover/nav:rotate-180 duration-300">
+              ↓
+            </span>
+          )}
+        </span>
+        
+        {/* Indicador de hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent scale-x-0 group-hover/nav:scale-x-100 transition-transform duration-500 origin-left" />
+      </Button>
+    )
+  }
+)
+NavButton.displayName = 'NavButton'
+
+// Componente para botones con iconos mejorado
+export interface IconButtonProps extends Omit<ButtonProps, 'leftIcon' | 'rightIcon' | 'variant'> {
+  icon: React.ReactNode
+  tooltip?: string
+  variant?: 'glass' | 'default' | 'secondary' | 'neon' | 'glass-primary'
+  hoverEffect?: 'scale' | 'rotate' | 'pulse' | 'glow'
+}
+
+export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
+  ({ 
+    icon, 
+    tooltip, 
+    variant = 'glass',
+    hoverEffect = 'scale',
+    className, 
+    size = 'icon', 
+    ...props 
+  }, ref) => {
+    const getHoverEffect = () => {
+      switch (hoverEffect) {
+        case 'rotate':
+          return 'group-hover:rotate-180'
+        case 'pulse':
+          return 'group-hover:animate-pulse'
+        case 'glow':
+          return 'group-hover:drop-shadow-lg group-hover:brightness-125'
+        default:
+          return 'group-hover:scale-125'
+      }
+    }
+
+    const button = (
+      <Button
+        ref={ref}
+        variant={variant as any}
+        size={size}
+        className={cn(
+          'group relative overflow-hidden',
+          'transition-all duration-300',
+          variant === 'neon' && 'hover:shadow-lg hover:shadow-primary/50',
+          className
+        )}
+        {...props}
+      >
+        <span className={cn('transition-all duration-300', getHoverEffect())}>
+          {icon}
+        </span>
+        
+        {/* Ripple effect para iconos */}
+        <div className="absolute inset-0 bg-white/20 rounded-full scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+      </Button>
+    )
+
+    if (tooltip) {
+      return (
+        <div className="relative group/tooltip">
+          {button}
+          <div className={cn(
+            'absolute z-50 px-3 py-2 text-xs font-medium text-white',
+            'bg-gray-900/90 backdrop-blur-sm border border-white/20 rounded-lg shadow-xl',
+            'opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible',
+            'transition-all duration-300 pointer-events-none whitespace-nowrap',
+            'bottom-full left-1/2 transform -translate-x-1/2 -translate-y-2',
+            'before:absolute before:top-full before:left-1/2 before:transform before:-translate-x-1/2',
+            'before:border-4 before:border-transparent before:border-t-gray-900/90'
+          )}>
+            {tooltip}
+          </div>
+        </div>
+      )
+    }
+
+    return button
+  }
+)
+IconButton.displayName = 'IconButton'
+
+// Componente para botones flotantes (FAB)
+export interface FloatingButtonProps extends Omit<ButtonProps, 'variant' | 'size'> {
+  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
+  icon: React.ReactNode
+  label?: string
+  expandOnHover?: boolean
+}
+
+export const FloatingButton = React.forwardRef<HTMLButtonElement, FloatingButtonProps>(
+  ({ 
+    position = 'bottom-right',
+    icon,
+    label,
+    expandOnHover = false,
+    className,
+    ...props 
+  }, ref) => {
+    const getPositionClasses = () => {
+      switch (position) {
+        case 'bottom-left':
+          return 'bottom-6 left-6'
+        case 'top-right':
+          return 'top-6 right-6'
+        case 'top-left':
+          return 'top-6 left-6'
+        default:
+          return 'bottom-6 right-6'
+      }
+    }
+
+    return (
+      <Button
+        ref={ref}
+        variant="gradient-primary"
+        size={expandOnHover && label ? 'default' : 'icon-lg'}
+        className={cn(
+          'fixed z-40 group shadow-2xl shadow-primary/50 hover:shadow-3xl hover:shadow-primary/70',
+          'transition-all duration-500 ease-out',
+          getPositionClasses(),
+          expandOnHover && label && 'hover:pr-4',
+          className
+        )}
+        {...props}
+      >
+        <span className="flex items-center gap-2">
+          <span className="transition-transform group-hover:scale-110">
+            {icon}
+          </span>
+          {label && expandOnHover && (
+            <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 whitespace-nowrap">
+              {label}
+            </span>
+          )}
+        </span>
+      </Button>
+    )
+  }
+)
+FloatingButton.displayName = 'FloatingButton'
+
+// Componente para grupo de botones
+export interface ButtonGroupProps {
+  children: React.ReactNode
+  orientation?: 'horizontal' | 'vertical'
+  variant?: 'attached' | 'separated'
+  className?: string
+}
+
+export const ButtonGroup = React.forwardRef<HTMLDivElement, ButtonGroupProps>(
+  ({ children, orientation = 'horizontal', variant = 'attached', className }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'flex',
+          orientation === 'horizontal' ? 'flex-row' : 'flex-col',
+          variant === 'attached' 
+            ? orientation === 'horizontal' 
+              ? '[&>*:not(:first-child)]:rounded-l-none [&>*:not(:last-child)]:rounded-r-none [&>*:not(:first-child)]:border-l-0'
+              : '[&>*:not(:first-child)]:rounded-t-none [&>*:not(:last-child)]:rounded-b-none [&>*:not(:first-child)]:border-t-0'
+            : orientation === 'horizontal'
+              ? 'gap-2'
+              : 'gap-2',
+          className
+        )}
+        role="group"
+      >
+        {children}
+      </div>
+    )
+  }
+)
+ButtonGroup.displayName = 'ButtonGroup'
+
+export { Button, buttonVariants }
+
+
+================================================
+FILE: src/components/ui/VideoPlayer.tsx
+================================================
+'use client'
+
+import { useRef, useEffect, useState, useCallback } from 'react'
+import { cn } from '@/lib/utils'
+import { useVideoState } from '@/hooks/useVideoState'
+import { useBackgroundRemoval } from '@/hooks/useBackgroundRemoval'
+import type { VideoConfig } from '@/types/video'
+
+interface VideoPlayerProps {
+  config: VideoConfig
+  className?: string
+  onLoad?: () => void
+  onError?: (error: string) => void
+}
+
+export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerProps) {
+  const idleVideoRef = useRef<HTMLVideoElement>(null)
+  const talkingVideoRef = useRef<HTMLVideoElement>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const {
+    currentVideo,
+    shouldShowTalkingVideo,
+    shouldShowIdleVideo,
+    isInteracting,
+  } = useVideoState({
+    autoReturnToIdle: true,
+    idleTimeout: 3000,
+  })
+
+  const backgroundRemoval = useBackgroundRemoval({
+    type: config.backgroundType || 'black',
+    enabled: config.removeBackground ?? true,
+    autoDetect: true,
+  })
+
+  // Suprimir warning de variable no usada
+  const _ = { isInteracting, talkingVideoRef }
+
+  // Función para configurar un video
+  const setupVideo = useCallback((
+    videoElement: HTMLVideoElement,
+    src: string,
+    isActive: boolean
+  ) => {
+    if (!videoElement) return
+
+    try {
+      // Configurar propiedades básicas
+      videoElement.src = src
+      videoElement.autoplay = config.autoPlay ?? true
+      videoElement.loop = config.loop ?? true
+      videoElement.muted = config.muted ?? true
+      videoElement.controls = config.controls ?? false
+      videoElement.playsInline = config.playsInline ?? true
+      
+      // Configurar poster si está disponible
+      if (config.poster && !isActive) {
+        videoElement.poster = config.poster
+      }
+
+      // Aplicar estilos para ocultar controles completamente
+      videoElement.style.outline = 'none'
+      videoElement.style.border = 'none'
+      
+      // Remover atributos de control
+      videoElement.removeAttribute('controls')
+      videoElement.setAttribute('disablePictureInPicture', 'true')
+      videoElement.setAttribute('controlsList', 'nodownload nofullscreen noremoteplayback')
+
+      // Aplicar remoción de fondo si está habilitada
+      if (config.removeBackground) {
+        backgroundRemoval.optimizeForPerformance(videoElement)
+        backgroundRemoval.detectBackground(videoElement)
+      }
+
+      // Configurar visibilidad inicial
+      videoElement.style.opacity = isActive ? '1' : '0'
+      videoElement.style.zIndex = isActive ? '2' : '1'
+      videoElement.style.transition = 'opacity 0.3s ease-in-out'
+
+    } catch (error) {
+      console.error('Error setting up video:', error)
+      onError?.(error instanceof Error ? error.message : 'Error configurando video')
+    }
+  }, [config, backgroundRemoval, onError])
+
+  // Función para manejar la carga del video
+  const handleVideoLoad = useCallback((videoElement: HTMLVideoElement) => {
+    setIsLoaded(true)
+    onLoad?.()
+    
+    // Asegurar reproducción automática
+    if (config.autoPlay) {
+      videoElement.play().catch((error) => {
+        console.warn('Autoplay prevented:', error)
+        // El autoplay puede estar bloqueado, esto es normal
+      })
+    }
+  }, [config.autoPlay, onLoad])
+
+  // Función para manejar errores de video
+  const handleVideoError = useCallback((error: Event, videoType: 'idle' | 'talking') => {
+    const errorMessage = `Error cargando video ${videoType}`
+    setLoadError(errorMessage)
+    onError?.(errorMessage)
+    console.error('Video error:', error)
+  }, [onError])
+
+  // Función para cambiar entre videos
+  const switchVideo = useCallback((showTalking: boolean) => {
+    const idleVideo = idleVideoRef.current
+    const talkingVideo = talkingVideoRef.current
+
+    if (!idleVideo || !talkingVideo) return
+
+    try {
+      if (showTalking) {
+        // Mostrar video hablando
+        talkingVideo.style.opacity = '1'
+        talkingVideo.style.zIndex = '3'
+        idleVideo.style.opacity = '0'
+        idleVideo.style.zIndex = '1'
+        
+        // Asegurar que el video talking esté reproduciéndose
+        if (talkingVideo.paused) {
+          talkingVideo.play().catch(console.warn)
+        }
+      } else {
+        // Mostrar video idle
+        idleVideo.style.opacity = '1'
+        idleVideo.style.zIndex = '3'
+        talkingVideo.style.opacity = '0'
+        talkingVideo.style.zIndex = '1'
+        
+        // Asegurar que el video idle esté reproduciéndose
+        if (idleVideo.paused) {
+          idleVideo.play().catch(console.warn)
+        }
+      }
+    } catch (error) {
+      console.error('Error switching videos:', error)
+    }
+  }, [])
+
+  // Configurar videos cuando cambien las referencias
+  useEffect(() => {
+    const idleVideo = idleVideoRef.current
+    const talkingVideo = talkingVideoRef.current
+
+    if (idleVideo && config.idle) {
+      setupVideo(idleVideo, config.idle, currentVideo === 'idle')
+      
+      const handleLoad = () => handleVideoLoad(idleVideo)
+      const handleError = (e: Event) => handleVideoError(e, 'idle')
+      
+      idleVideo.addEventListener('loadeddata', handleLoad)
+      idleVideo.addEventListener('error', handleError)
+      
+      return () => {
+        idleVideo.removeEventListener('loadeddata', handleLoad)
+        idleVideo.removeEventListener('error', handleError)
+      }
+    }
+  }, [config.idle, currentVideo, setupVideo, handleVideoLoad, handleVideoError])
+
+  useEffect(() => {
+    const talkingVideo = talkingVideoRef.current
+
+    if (talkingVideo && config.talking) {
+      setupVideo(talkingVideo, config.talking, currentVideo === 'talking')
+      
+      const handleLoad = () => handleVideoLoad(talkingVideo)
+      const handleError = (e: Event) => handleVideoError(e, 'talking')
+      
+      talkingVideo.addEventListener('loadeddata', handleLoad)
+      talkingVideo.addEventListener('error', handleError)
+      
+      return () => {
+        talkingVideo.removeEventListener('loadeddata', handleLoad)
+        talkingVideo.removeEventListener('error', handleError)
+      }
+    }
+  }, [config.talking, currentVideo, setupVideo, handleVideoLoad, handleVideoError])
+
+  // Manejar cambios de estado del video
+  useEffect(() => {
+    switchVideo(shouldShowTalkingVideo)
+  }, [shouldShowTalkingVideo, switchVideo])
+
+  // Limpiar recursos al desmontar
+  useEffect(() => {
+    return () => {
+      const idleVideo = idleVideoRef.current
+      const talkingVideo = talkingVideoRef.current
+      
+      if (idleVideo) {
+        idleVideo.pause()
+        idleVideo.src = ''
+      }
+      
+      if (talkingVideo) {
+        talkingVideo.pause()
+        talkingVideo.src = ''
+      }
+    }
+  }, [])
+
+  if (loadError) {
+    return (
+      <div className={cn(
+        "flex items-center justify-center bg-gray-100 rounded-lg",
+        className
+      )}>
+        <div className="text-center p-4">
+          <p className="text-sm text-gray-600 mb-2">Error cargando video</p>
+          <p className="text-xs text-gray-500">{loadError}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn(
+      "relative w-full h-full overflow-hidden video-container",
+      className
+    )}>
+      {/* Video Idle */}
+      <video
+        ref={idleVideoRef}
+        className={cn(
+          "absolute inset-0 w-full h-full object-cover video-element",
+          "video-state-idle",
+          config.removeBackground && "remove-black-background"
+        )}
+        style={{
+          opacity: shouldShowIdleVideo ? 1 : 0,
+          zIndex: shouldShowIdleVideo ? 3 : 1,
+        }}
+        autoPlay={config.autoPlay}
+        loop={config.loop}
+        muted={config.muted}
+        playsInline={config.playsInline}
+        disablePictureInPicture
+        controlsList="nodownload nofullscreen noremoteplaybook"
+      />
+
+      {/* Video Talking */}
+      <video
+        ref={talkingVideoRef}
+        className={cn(
+          "absolute inset-0 w-full h-full object-cover video-element",
+          "video-state-talking",
+          config.removeBackground && "remove-black-background"
+        )}
+        style={{
+          opacity: shouldShowTalkingVideo ? 1 : 0,
+          zIndex: shouldShowTalkingVideo ? 3 : 1,
+        }}
+        autoPlay={config.autoPlay}
+        loop={config.loop}
+        muted={config.muted}
+        playsInline={config.playsInline}
+        disablePictureInPicture
+        controlsList="nodownload nofullscreen noremoteplaybook"
+      />
+
+      {/* Loading overlay */}
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <div className="animate-pulse">
+            <div className="w-16 h-16 bg-gray-300 rounded-full"></div>
+          </div>
+        </div>
+      )}
+
+      {/* Debug info (solo en desarrollo) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs p-2 rounded">
+          <div>Current: {currentVideo}</div>
+          <div>Talking: {shouldShowTalkingVideo ? 'YES' : 'NO'}</div>
+          <div>Idle: {shouldShowIdleVideo ? 'YES' : 'NO'}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+================================================
+FILE: src/data/content.json
+================================================
+{
+  "home": {
+    "hero": {
+      "title": "Conecta con el futuro de la cobranza",
+      "subtitle": "Especialistas en gestión de cobranza inteligente",
+      "description": "Transformamos la gestión de cartera con tecnología avanzada y estrategias personalizadas para maximizar la recuperación de tu inversión.",
+      "ctaText": "Contáctanos",
+      "ctaLink": "/contacto",
+      "backgroundEffect": "aurora",
+      "professionalVideo": {
+        "idle": "/videos/professional-woman-idle.mp4",
+        "talking": "/videos/professional-woman-talking.mp4",
+        "poster": "/images/professional-woman-poster.jpg",
+        "autoPlay": true,
+        "loop": true,
+        "muted": true,
+        "controls": false,
+        "playsInline": true,
+        "removeBackground": true,
+        "backgroundType": "black"
+      }
+    },
+    "navigation": {
+      "brand": "Intelcobro",
+      "logo": "/images/logo-intelcobro.svg",
+      "items": [
+        {
+          "id": "inicio",
+          "label": "Inicio",
+          "href": "/",
+          "active": true
+        },
+        {
+          "id": "servicios",
+          "label": "Servicios",
+          "href": "/servicios"
+        },
+        {
+          "id": "trabajar",
+          "label": "Trabaja con nosotros",
+          "href": "/trabajar"
+        },
+        {
+          "id": "solucionar",
+          "label": "Soluciona tu deuda",
+          "href": "/solucionar"
+        },
+        {
+          "id": "proteccion",
+          "label": "Protección de datos",
+          "href": "/proteccion"
+        }
+      ]
+    },
+    "seo": {
+      "title": "Intelcobro - Conecta con el futuro de la cobranza",
+      "description": "Especialistas en gestión de cobranza inteligente con tecnología avanzada. Recuperamos tu cartera con estrategias personalizadas y resultados garantizados.",
+      "keywords": ["cobranza", "gestión de cartera", "recuperación", "Ecuador", "tecnología financiera"],
+      "ogImage": "/images/og-image.jpg",
+      "twitterCard": "summary_large_image"
+    }
+  }
+}
+
+
+================================================
+FILE: src/hooks/useBackgroundRemoval.tsx
+================================================
+'use client'
+
+import { useRef, useCallback } from 'react'
+import { detectVideoBackground } from '@/lib/utils'
+
+interface UseBackgroundRemovalOptions {
+  type?: 'black' | 'white' | 'transparent'
+  enabled?: boolean
+  autoDetect?: boolean
+  threshold?: number
+  softness?: number
+  spill?: number
+  onDetectionComplete?: (backgroundType: 'black' | 'white' | 'transparent') => void
+}
+
+export function useBackgroundRemoval(options: UseBackgroundRemovalOptions = {}) {
+  const {
+    type = 'black',
+    enabled = true,
+    autoDetect = true,
+    threshold = 0.1,
+    softness = 0.02,
+    spill = 0.1,
+    onDetectionComplete,
+  } = options
+
+  const detectedTypeRef = useRef<'black' | 'white' | 'transparent'>('black')
+  const isProcessingRef = useRef(false)
+
+  // Función para aplicar remoción de fondo
+  const applyRemoval = useCallback((
+    videoElement: HTMLVideoElement,
+    backgroundType: 'black' | 'white' | 'transparent' = type
+  ) => {
+    if (!enabled || !videoElement) return
+
+    try {
+      switch (backgroundType) {
+        case 'black':
+          videoElement.style.mixBlendMode = 'screen'
+          videoElement.style.filter = `contrast(1.2) brightness(1.1) saturate(1.1)`
+          break
+          
+        case 'white':
+          videoElement.style.mixBlendMode = 'multiply'
+          videoElement.style.filter = `contrast(1.3) brightness(0.9) saturate(1.2)`
+          break
+          
+        case 'transparent':
+        default:
+          videoElement.style.mixBlendMode = 'normal'
+          videoElement.style.filter = 'none'
+          break
+      }
+
+      // Aplicar clase CSS adicional para mejor control
+      videoElement.classList.remove('remove-black-background', 'remove-white-background', 'chroma-key-black')
+      
+      if (backgroundType === 'black') {
+        videoElement.classList.add('remove-black-background')
+      } else if (backgroundType === 'white') {
+        videoElement.classList.add('remove-white-background')
+      }
+
+    } catch (error) {
+      console.warn('Error applying background removal:', error)
+    }
+  }, [enabled, type])
+
+  // Función para detectar automáticamente el tipo de fondo
+  const detectBackground = useCallback((videoElement: HTMLVideoElement) => {
+    if (!autoDetect || !enabled || isProcessingRef.current) return
+
+    isProcessingRef.current = true
+
+    try {
+      // Esperar a que el video esté listo
+      const handleLoadedData = () => {
+        try {
+          const detectedType = detectVideoBackground(videoElement)
+          detectedTypeRef.current = detectedType
+          onDetectionComplete?.(detectedType)
+          
+          // Aplicar remoción basada en detección
+          applyRemoval(videoElement, detectedType)
+        } catch (error) {
+          console.warn('Error detecting video background:', error)
+          // Fallback al tipo especificado
+          applyRemoval(videoElement, type)
+        } finally {
+          isProcessingRef.current = false
+        }
+      }
+
+      if (videoElement.readyState >= 2) {
+        // Video ya está listo
+        handleLoadedData()
+      } else {
+        // Esperar a que el video esté listo
+        videoElement.addEventListener('loadeddata', handleLoadedData, { once: true })
+      }
+    } catch (error) {
+      console.warn('Error in background detection setup:', error)
+      isProcessingRef.current = false
+    }
+  }, [autoDetect, enabled, onDetectionComplete, applyRemoval, type])
+
+  // Función para remover efectos de fondo
+  const removeBackgroundEffects = useCallback((videoElement: HTMLVideoElement) => {
+    if (!videoElement) return
+
+    try {
+      videoElement.style.mixBlendMode = 'normal'
+      videoElement.style.filter = 'none'
+      videoElement.classList.remove('remove-black-background', 'remove-white-background', 'chroma-key-black')
+    } catch (error) {
+      console.warn('Error removing background effects:', error)
+    }
+  }, [])
+
+  // Función para aplicar efectos avanzados de chroma key
+  const applyChromaKey = useCallback((
+    videoElement: HTMLVideoElement,
+    color: 'black' | 'white' | 'green' = 'black'
+  ) => {
+    if (!enabled || !videoElement) return
+
+    try {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      
+      if (!ctx) return
+
+      const processFrame = () => {
+        canvas.width = videoElement.videoWidth
+        canvas.height = videoElement.videoHeight
+        
+        ctx.drawImage(videoElement, 0, 0)
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
+
+        // Procesar cada pixel para chroma key
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i] || 0
+          const g = data[i + 1] || 0
+          const b = data[i + 2] || 0
+          
+          let shouldRemove = false
+          
+          switch (color) {
+            case 'black':
+              shouldRemove = r < 50 && g < 50 && b < 50
+              break
+            case 'white':
+              shouldRemove = r > 200 && g > 200 && b > 200
+              break
+            case 'green':
+              shouldRemove = g > (r + b) * 1.5
+              break
+          }
+          
+          if (shouldRemove) {
+            data[i + 3] = 0 // Hacer transparente
+          }
+        }
+        
+        ctx.putImageData(imageData, 0, 0)
+        
+        // Aplicar el resultado al video (requiere WebGL o Canvas como overlay)
+        if ('requestVideoFrameCallback' in videoElement) {
+          (videoElement as any).requestVideoFrameCallback(processFrame)
+        }
+      }
+
+      if ('requestVideoFrameCallback' in videoElement) {
+        (videoElement as any).requestVideoFrameCallback(processFrame)
+      }
+    } catch (error) {
+      console.warn('Error applying chroma key:', error)
+    }
+  }, [enabled])
+
+  // Función para optimizar rendimiento
+  const optimizeForPerformance = useCallback((videoElement: HTMLVideoElement) => {
+    if (!videoElement) return
+
+    try {
+      // Aplicar optimizaciones CSS
+      videoElement.style.willChange = 'transform, opacity'
+      videoElement.style.transform = 'translateZ(0)' // Forzar aceleración hardware
+      videoElement.style.backfaceVisibility = 'hidden'
+      
+      // Configurar hints de rendimiento
+      if ('style' in videoElement) {
+        (videoElement.style as any).imageRendering = 'optimizeSpeed'
+      }
+    } catch (error) {
+      console.warn('Error optimizing video performance:', error)
+    }
+  }, [])
+
+  return {
+    // Funciones principales
+    applyRemoval,
+    detectBackground,
+    removeBackgroundEffects,
+    applyChromaKey,
+    optimizeForPerformance,
+    
+    // Estado
+    detectedType: detectedTypeRef.current,
+    isProcessing: isProcessingRef.current,
+    
+    // Configuración actual
+    config: {
+      type,
+      enabled,
+      autoDetect,
+      threshold,
+      softness,
+      spill,
+    },
+  }
+}
+
+
+================================================
+FILE: src/hooks/useVideoState.tsx
+================================================
+'use client'
+
+import { useEffect, useRef, useCallback } from 'react'
+import { useAppStore } from '@/lib/store'
+import { debounce } from '@/lib/utils'
+
+interface UseVideoStateOptions {
+  autoReturnToIdle?: boolean
+  idleTimeout?: number
+  onVideoChange?: (videoType: 'idle' | 'talking') => void
+}
+
+export function useVideoState(options: UseVideoStateOptions = {}) {
+  const {
+    autoReturnToIdle = true,
+    idleTimeout = 3000, // 3 segundos por defecto
+    onVideoChange,
+  } = options
+
+  const {
+    currentVideo,
+    isRecording,
+    isProcessing,
+    hasStartedConversation,
+    lastInteraction,
+    setCurrentVideo,
+    startRecording,
+    stopRecording,
+    startProcessing,
+    stopProcessing,
+    startConversation,
+    endConversation,
+    updateLastInteraction,
+  } = useAppStore()
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isUserInteracting = useRef(false)
+
+  // Función para cambiar a video hablando
+  const switchToTalking = useCallback(() => {
+    if (currentVideo !== 'talking') {
+      setCurrentVideo('talking')
+      updateLastInteraction()
+      onVideoChange?.('talking')
+    }
+  }, [currentVideo, setCurrentVideo, updateLastInteraction, onVideoChange])
+
+  // Función para cambiar a video idle
+  const switchToIdle = useCallback(() => {
+    if (currentVideo !== 'idle' && !isRecording && !isProcessing) {
+      setCurrentVideo('idle')
+      updateLastInteraction()
+      onVideoChange?.('idle')
+    }
+  }, [currentVideo, isRecording, isProcessing, setCurrentVideo, updateLastInteraction, onVideoChange])
+
+  // Función debouncada para volver a idle
+  const debouncedReturnToIdle = useCallback(
+    debounce(() => {
+      if (!isUserInteracting.current && !isRecording && !isProcessing) {
+        switchToIdle()
+      }
+    }, idleTimeout),
+    [switchToIdle, isRecording, isProcessing, idleTimeout]
+  )
+
+  // Función para manejar inicio de conversación
+  const handleStartConversation = useCallback(() => {
+    isUserInteracting.current = true
+    startConversation()
+    startRecording()
+    switchToTalking()
+
+    // Limpiar timeout existente
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+  }, [startConversation, startRecording, switchToTalking])
+
+  // Función para manejar fin de grabación
+  const handleStopRecording = useCallback(() => {
+    stopRecording()
+    startProcessing()
+    
+    // Mantener video hablando durante procesamiento
+    switchToTalking()
+  }, [stopRecording, startProcessing, switchToTalking])
+
+  // Función para manejar fin de procesamiento
+  const handleStopProcessing = useCallback(() => {
+    stopProcessing()
+    isUserInteracting.current = false
+    
+    // Programar retorno a idle si está habilitado
+    if (autoReturnToIdle) {
+      timeoutRef.current = setTimeout(() => {
+        if (!isUserInteracting.current) {
+          switchToIdle()
+          endConversation()
+        }
+      }, idleTimeout)
+    }
+  }, [stopProcessing, autoReturnToIdle, idleTimeout, switchToIdle, endConversation])
+
+  // Función para detectar interacción del usuario
+  const handleUserInteraction = useCallback(() => {
+    isUserInteracting.current = true
+    updateLastInteraction()
+    
+    // Limpiar timeout existente
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+
+    // Si no está grabando, cambiar a talking temporalmente
+    if (!isRecording && !isProcessing) {
+      switchToTalking()
+      
+      // Programar retorno a idle
+      if (autoReturnToIdle) {
+        timeoutRef.current = setTimeout(() => {
+          isUserInteracting.current = false
+          switchToIdle()
+        }, idleTimeout)
+      }
+    }
+  }, [isRecording, isProcessing, switchToTalking, switchToIdle, autoReturnToIdle, idleTimeout, updateLastInteraction])
+
+  // Función para forzar retorno a idle
+  const forceReturnToIdle = useCallback(() => {
+    isUserInteracting.current = false
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    switchToIdle()
+    endConversation()
+  }, [switchToIdle, endConversation])
+
+  // Limpiar timeouts al desmontar
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Monitorear cambios en el estado para log
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Video State Changed:', {
+        currentVideo,
+        isRecording,
+        isProcessing,
+        hasStartedConversation,
+        isUserInteracting: isUserInteracting.current,
+      })
+    }
+  }, [currentVideo, isRecording, isProcessing, hasStartedConversation])
+
+  return {
+    // Estado actual
+    currentVideo,
+    isRecording,
+    isProcessing,
+    hasStartedConversation,
+    lastInteraction,
+    
+    // Estados derivados
+    shouldShowTalkingVideo: currentVideo === 'talking',
+    shouldShowIdleVideo: currentVideo === 'idle',
+    isInteracting: isRecording || isProcessing || isUserInteracting.current,
+    
+    // Acciones principales
+    startConversation: handleStartConversation,
+    stopRecording: handleStopRecording,
+    stopProcessing: handleStopProcessing,
+    onUserInteraction: handleUserInteraction,
+    forceReturnToIdle,
+    
+    // Acciones directas de video
+    switchToTalking,
+    switchToIdle,
+    
+    // Función debouncada (agregada para evitar warning)
+    debouncedReturnToIdle,
+  }
+}
+
+
+================================================
+FILE: src/lib/api.ts
+================================================
+import { API_CONFIG, API_ENDPOINTS, ERROR_MESSAGES } from './constants'
+import type { APIResponse, ContactFormData } from '@/types'
+
+// Configuración base del cliente
+class APIClient {
+  private baseURL: string
+  private defaultHeaders: Record<string, string>
+
+  constructor(baseURL: string = API_CONFIG.BASE_URL) {
+    this.baseURL = baseURL
+    this.defaultHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    }
+  }
+
+  // Método privado para hacer peticiones
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<APIResponse<T>> {
+    const url = `${this.baseURL}${endpoint}`
+    
+    const config: RequestInit = {
+      headers: {
+        ...this.defaultHeaders,
+        ...options.headers,
+      },
+      ...options,
+    }
+
+    // Agregar token de autenticación si está disponible
+    const token = this.getAuthToken()
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        'Authorization': `Bearer ${token}`,
+      }
+    }
+
+    try {
+      const response = await this.fetchWithRetry(url, config)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      
+      return {
+        success: true,
+        data: data as T,
+        message: data.message || 'Operación exitosa',
+      } as APIResponse<T>
+    } catch (error) {
+      console.error('API Error:', error)
+      
+      return {
+        success: false,
+        error: this.formatError(error),
+        message: this.getErrorMessage(error),
+      } as APIResponse<T>
+    }
+  }
+
+  // Implementar retry logic
+  private async fetchWithRetry(
+    url: string, 
+    config: RequestInit, 
+    attempt: number = 1
+  ): Promise<Response> {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT)
+      
+      const response = await fetch(url, {
+        ...config,
+        signal: controller.signal,
+      })
+      
+      clearTimeout(timeoutId)
+      return response
+    } catch (error) {
+      if (attempt < API_CONFIG.RETRY_ATTEMPTS) {
+        await this.delay(API_CONFIG.RETRY_DELAY * attempt)
+        return this.fetchWithRetry(url, config, attempt + 1)
+      }
+      throw error
+    }
+  }
+
+  // Utilidad para delay
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  // Obtener token de autenticación
+  private getAuthToken(): string | null {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('auth-token')
+  }
+
+  // Formatear errores
+  private formatError(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message
+    }
+    if (typeof error === 'string') {
+      return error
+    }
+    return ERROR_MESSAGES.GENERIC
+  }
+
+  // Obtener mensaje de error apropiado
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        return ERROR_MESSAGES.TIMEOUT
+      }
+      if (error.message.includes('Failed to fetch')) {
+        return ERROR_MESSAGES.NETWORK
+      }
+      if (error.message.includes('401')) {
+        return ERROR_MESSAGES.UNAUTHORIZED
+      }
+      if (error.message.includes('404')) {
+        return ERROR_MESSAGES.NOT_FOUND
+      }
+      if (error.message.includes('5')) {
+        return ERROR_MESSAGES.SERVER_ERROR
+      }
+    }
+    return ERROR_MESSAGES.GENERIC
+  }
+
+  // Métodos públicos de la API
+  
+  // Contacto
+  async submitContact(data: ContactFormData): Promise<APIResponse<{ id: string }>> {
+    return this.request<{ id: string }>(API_ENDPOINTS.CONTACT, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // Enviar lead de la ruleta
+  async submitLead(data: {
+    name: string
+    email: string
+    phone?: string
+    discount: number
+    source: string
+  }): Promise<APIResponse<{ id: string }>> {
+    return this.request<{ id: string }>(API_ENDPOINTS.LEADS, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // Solicitar cotización
+  async requestQuote(data: {
+    company: string
+    email: string
+    phone: string
+    debtAmount: number
+    debtType: string
+    message?: string
+  }): Promise<APIResponse<{ id: string }>> {
+    return this.request<{ id: string }>(API_ENDPOINTS.QUOTE, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // Obtener contenido dinámico
+  async getContent(section?: string): Promise<APIResponse<Record<string, any>>> {
+    const endpoint = section 
+      ? `${API_ENDPOINTS.CONTENT}/${section}` 
+      : API_ENDPOINTS.CONTENT
+    
+    return this.request<Record<string, any>>(endpoint, {
+      method: 'GET',
+    })
+  }
+
+  // Obtener servicios
+  async getServices(): Promise<APIResponse<Array<{
+    id: string
+    name: string
+    description: string
+    icon: string
+    features: string[]
+  }>>> {
+    return this.request<Array<{
+      id: string
+      name: string
+      description: string
+      icon: string
+      features: string[]
+    }>>(API_ENDPOINTS.SERVICES, {
+      method: 'GET',
+    })
+  }
+
+  // Subir archivo
+  async uploadFile(file: File): Promise<APIResponse<{ url: string }>> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    return this.request<{ url: string }>(API_ENDPOINTS.UPLOAD, {
+      method: 'POST',
+      headers: {
+        // No incluir Content-Type para FormData
+      },
+      body: formData,
+    })
+  }
+
+  // Autenticación
+  async login(email: string, password: string): Promise<APIResponse<{
+    token: string
+    user: {
+      id: string
+      email: string
+      name: string
+    }
+  }>> {
+    return this.request<{
+      token: string
+      user: {
+        id: string
+        email: string
+        name: string
+      }
+    }>(API_ENDPOINTS.LOGIN, {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+  }
+
+  async logout(): Promise<APIResponse<void>> {
+    const result = await this.request<void>(API_ENDPOINTS.LOGOUT, {
+      method: 'POST',
+    })
+    
+    // Limpiar token local
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth-token')
+    }
+    
+    return result
+  }
+
+  // Refrescar token
+  async refreshToken(): Promise<APIResponse<{ token: string }>> {
+    return this.request<{ token: string }>(API_ENDPOINTS.REFRESH, {
+      method: 'POST',
+    })
+  }
+
+  // Hacer el método request público para interceptores
+  public async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<APIResponse<T>> {
+    return this.request<T>(endpoint, options)
+  }
+}
+
+// Instancia singleton del cliente
+export const apiClient = new APIClient()
+
+// Hooks para uso en React
+export function useAPI() {
+  return {
+    // Métodos del cliente
+    submitContact: apiClient.submitContact.bind(apiClient),
+    submitLead: apiClient.submitLead.bind(apiClient),
+    requestQuote: apiClient.requestQuote.bind(apiClient),
+    getContent: apiClient.getContent.bind(apiClient),
+    getServices: apiClient.getServices.bind(apiClient),
+    uploadFile: apiClient.uploadFile.bind(apiClient),
+    login: apiClient.login.bind(apiClient),
+    logout: apiClient.logout.bind(apiClient),
+    refreshToken: apiClient.refreshToken.bind(apiClient),
+  }
+}
+
+// Funciones de utilidad para formularios
+export async function submitContactForm(formData: ContactFormData) {
+  try {
+    const response = await apiClient.submitContact(formData)
+    
+    if (!response.success) {
+      throw new Error(response.error || ERROR_MESSAGES.GENERIC)
+    }
+    
+    return response.data
+  } catch (error) {
+    console.error('Error submitting contact form:', error)
+    throw error
+  }
+}
+
+export async function submitLeadForm(leadData: {
+  name: string
+  email: string
+  phone?: string
+  discount: number
+  source: string
+}) {
+  try {
+    const response = await apiClient.submitLead(leadData)
+    
+    if (!response.success) {
+      throw new Error(response.error || ERROR_MESSAGES.GENERIC)
+    }
+    
+    return response.data
+  } catch (error) {
+    console.error('Error submitting lead form:', error)
+    throw error
+  }
+}
+
+// Funciones para manejo de archivos
+export async function uploadFileWithProgress(
+  file: File,
+  _onProgress?: (progress: number) => void
+): Promise<{ url: string }> {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const xhr = new XMLHttpRequest()
+
+    // Configurar progress handler
+    if (_onProgress) {
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100
+          _onProgress(progress)
+        }
+      })
+    }
+
+    // Configurar completion handler
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText)
+          resolve(response.data)
+        } catch (error) {
+          reject(new Error('Error parsing response'))
+        }
+      } else {
+        reject(new Error(`Upload failed: ${xhr.statusText}`))
+      }
+    })
+
+    // Configurar error handler
+    xhr.addEventListener('error', () => {
+      reject(new Error('Upload failed'))
+    })
+
+    // Enviar petición
+    xhr.open('POST', `${API_CONFIG.BASE_URL}${API_ENDPOINTS.UPLOAD}`)
+    
+    // Agregar token si está disponible
+    const token = localStorage.getItem('auth-token')
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    }
+    
+    xhr.send(formData)
+  })
+}
+
+// Interceptor para manejar errores globalmente
+export function setupAPIInterceptors() {
+  // Interceptar respuestas 401 para renovar token automáticamente
+  const originalRequest = apiClient.makeRequest.bind(apiClient)
+  
+  // Sobrescribir el método con manejo de tipos correcto
+  apiClient.makeRequest = async function<T>(endpoint: string, options: RequestInit = {}): Promise<APIResponse<T>> {
+    try {
+      const result = await originalRequest<T>(endpoint, options)
+      return result
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('401')) {
+        // Intentar renovar token
+        try {
+          const refreshResponse = await this.refreshToken()
+          if (refreshResponse.success && refreshResponse.data?.token) {
+            localStorage.setItem('auth-token', refreshResponse.data.token)
+            // Reintentar petición original
+            const retryResult = await originalRequest<T>(endpoint, options)
+            return retryResult
+          }
+        } catch (refreshError) {
+          // Si falla la renovación, limpiar token y redirigir a login
+          localStorage.removeItem('auth-token')
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login'
+          }
+        }
+      }
+      throw error
+    }
+  }
+}
+
+// Configurar interceptores al cargar
+if (typeof window !== 'undefined') {
+  setupAPIInterceptors()
+}
+
+
+================================================
+FILE: src/lib/constants.ts
+================================================
+// Configuración de la API
+export const API_CONFIG = {
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+  TIMEOUT: 10000, // 10 segundos
+  RETRY_ATTEMPTS: 3,
+  RETRY_DELAY: 1000, // 1 segundo
+} as const
+
+// Endpoints de la API
+export const API_ENDPOINTS = {
+  // Contacto y formularios
+  CONTACT: '/contact',
+  LEADS: '/leads',
+  QUOTE: '/quote',
+  
+  // Autenticación
+  LOGIN: '/auth/login',
+  LOGOUT: '/auth/logout',
+  REFRESH: '/auth/refresh',
+  
+  // Recursos
+  CONTENT: '/content',
+  SERVICES: '/services',
+  TESTIMONIALS: '/testimonials',
+  
+  // Archivos
+  UPLOAD: '/upload',
+  DOWNLOAD: '/download',
+} as const
+
+// Configuración de videos
+export const VIDEO_CONFIG = {
+  FORMATS: ['mp4', 'webm', 'ogg'] as const,
+  MAX_SIZE: 50 * 1024 * 1024, // 50MB
+  PRELOAD_STRATEGY: 'metadata' as const,
+  CROSSORIGIN: 'anonymous' as const,
+  
+  // Configuración de fondo transparente
+  BACKGROUND_REMOVAL: {
+    BLACK_THRESHOLD: 50,
+    WHITE_THRESHOLD: 200,
+    CONTRAST_MULTIPLIER: 1.2,
+    BRIGHTNESS_MULTIPLIER: 1.1,
+  },
+} as const
+
+// Configuración de animaciones
+export const ANIMATION_CONFIG = {
+  DURATION: {
+    FAST: 150,
+    NORMAL: 300,
+    SLOW: 500,
+    EXTRA_SLOW: 1000,
+  },
+  EASING: {
+    LINEAR: 'linear',
+    EASE_IN: 'cubic-bezier(0.4, 0, 1, 1)',
+    EASE_OUT: 'cubic-bezier(0, 0, 0.2, 1)',
+    EASE_IN_OUT: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    BOUNCE: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+  },
+  STAGGER_DELAY: 100, // ms entre elementos
+} as const
+
+// Configuración de glassmorphism
+export const GLASS_CONFIG = {
+  BACKGROUND: 'rgba(255, 255, 255, 0.1)',
+  BACKDROP_BLUR: '10px',
+  BORDER: '1px solid rgba(255, 255, 255, 0.2)',
+  SHADOW: '0 8px 32px rgba(0, 0, 0, 0.1)',
+  
+  // Variantes
+  SUBTLE: {
+    BACKGROUND: 'rgba(255, 255, 255, 0.05)',
+    BACKDROP_BLUR: '5px',
+    BORDER: '1px solid rgba(255, 255, 255, 0.1)',
+  },
+  STRONG: {
+    BACKGROUND: 'rgba(255, 255, 255, 0.15)',
+    BACKDROP_BLUR: '15px',
+    BORDER: '1px solid rgba(255, 255, 255, 0.3)',
+  },
+} as const
+
+// Configuración de la aurora
+export const AURORA_CONFIG = {
+  BANDS: {
+    LOW: 3,
+    MEDIUM: 5,
+    HIGH: 7,
+  },
+  OPACITY: {
+    LOW: 0.2,
+    MEDIUM: 0.4,
+    HIGH: 0.6,
+  },
+  SPEED: {
+    SLOW: 0.5,
+    NORMAL: 1,
+    FAST: 1.5,
+  },
+  BLUR: {
+    DEFAULT: 50,
+    MOBILE: 30,
+    DESKTOP: 70,
+  },
+  COLORS: [
+    'rgba(147, 197, 253, 0.3)', // blue-300
+    'rgba(196, 181, 253, 0.3)', // purple-300
+    'rgba(249, 168, 212, 0.3)', // pink-300
+    'rgba(252, 165, 165, 0.3)', // red-300
+    'rgba(253, 186, 116, 0.3)', // orange-300
+    'rgba(134, 239, 172, 0.3)', // green-300
+  ],
+} as const
+
+// Configuración de breakpoints
+export const BREAKPOINTS = {
+  XS: 475,
+  SM: 640,
+  MD: 768,
+  LG: 1024,
+  XL: 1280,
+  '2XL': 1536,
+  '3XL': 1600,
+} as const
+
+// Configuración de Z-index
+export const Z_INDEX = {
+  DROPDOWN: 1000,
+  STICKY: 1020,
+  FIXED: 1030,
+  MODAL_BACKDROP: 1040,
+  MODAL: 1050,
+  POPOVER: 1060,
+  TOOLTIP: 1070,
+  NOTIFICATION: 1080,
+} as const
+
+// Mensajes de error comunes
+export const ERROR_MESSAGES = {
+  NETWORK: 'Error de conexión. Verifica tu internet.',
+  TIMEOUT: 'La solicitud tardó demasiado. Intenta de nuevo.',
+  UNAUTHORIZED: 'No tienes permisos para esta acción.',
+  NOT_FOUND: 'El recurso solicitado no existe.',
+  SERVER_ERROR: 'Error del servidor. Intenta más tarde.',
+  VALIDATION: 'Los datos ingresados no son válidos.',
+  GENERIC: 'Ha ocurrido un error inesperado.',
+  
+  // Específicos de video
+  VIDEO_LOAD_ERROR: 'Error al cargar el video.',
+  VIDEO_PLAY_ERROR: 'No se pudo reproducir el video.',
+  VIDEO_FORMAT_ERROR: 'Formato de video no soportado.',
+  
+  // Específicos de audio
+  AUDIO_PERMISSION: 'Se requiere permiso para usar el micrófono.',
+  AUDIO_NOT_SUPPORTED: 'Tu navegador no soporta grabación de audio.',
+} as const
+
+// Configuración de localStorage keys
+export const STORAGE_KEYS = {
+  THEME: 'intelcobro-theme',
+  USER_PREFERENCES: 'intelcobro-preferences',
+  FORM_DATA: 'intelcobro-form-data',
+  CART: 'intelcobro-cart',
+  AUTH_TOKEN: 'intelcobro-auth-token',
+  LAST_VISIT: 'intelcobro-last-visit',
+} as const
+
+// Configuración de cookies
+export const COOKIE_CONFIG = {
+  CONSENT: 'intelcobro-consent',
+  SESSION: 'intelcobro-session',
+  PREFERENCES: 'intelcobro-prefs',
+  
+  // Opciones por defecto
+  OPTIONS: {
+    SECURE: true,
+    SAME_SITE: 'lax' as const,
+    MAX_AGE: 30 * 24 * 60 * 60, // 30 días
+  },
+} as const
+
+// Configuración de SEO
+export const SEO_CONFIG = {
+  DEFAULT_TITLE: 'Intelcobro - Conecta con el futuro de la cobranza',
+  TITLE_TEMPLATE: '%s | Intelcobro',
+  DEFAULT_DESCRIPTION: 'Especialistas en gestión de cobranza inteligente con tecnología avanzada.',
+  SITE_NAME: 'Intelcobro',
+  SITE_URL: 'https://intelcobro.com',
+  TWITTER_HANDLE: '@intelcobro',
+  
+  // Configuración de Open Graph
+  OG_IMAGE: '/images/og-image.jpg',
+  OG_IMAGE_WIDTH: 1200,
+  OG_IMAGE_HEIGHT: 630,
+  
+  // Keywords comunes
+  KEYWORDS: [
+    'cobranza',
+    'gestión de cartera',
+    'recuperación de deuda',
+    'servicios financieros',
+    'Ecuador',
+    'tecnología financiera',
+    'cobranza inteligente',
+  ],
+} as const
+
+// Configuración de contacto
+export const CONTACT_CONFIG = {
+  PHONE: '+593-2-345-6789',
+  EMAIL: 'contacto@intelcobro.com',
+  ADDRESS: 'Av. Principal 123, Quito, Ecuador',
+  BUSINESS_HOURS: 'Lunes a Viernes, 8:00 AM - 6:00 PM',
+  
+  // Redes sociales
+  SOCIAL_LINKS: {
+    FACEBOOK: 'https://facebook.com/intelcobro',
+    LINKEDIN: 'https://linkedin.com/company/intelcobro',
+    TWITTER: 'https://twitter.com/intelcobro',
+    YOUTUBE: 'https://youtube.com/@intelcobro',
+  },
+} as const
+
+// Configuración de formularios
+export const FORM_CONFIG = {
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  ALLOWED_FILE_TYPES: [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ],
+  
+  // Validaciones
+  MIN_MESSAGE_LENGTH: 10,
+  MAX_MESSAGE_LENGTH: 1000,
+  PHONE_PATTERN: /^[\+]?[1-9][\d]{0,15}$/,
+  EMAIL_PATTERN: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+} as const
+
+// Configuración de performance
+export const PERFORMANCE_CONFIG = {
+  // Intersection Observer
+  INTERSECTION_THRESHOLD: 0.1,
+  INTERSECTION_ROOT_MARGIN: '50px',
+  
+  // Lazy loading
+  LAZY_LOAD_OFFSET: 100,
+  
+  // Debounce/throttle
+  SCROLL_THROTTLE: 16, // 60fps
+  RESIZE_DEBOUNCE: 250,
+  SEARCH_DEBOUNCE: 300,
+  
+  // Cache
+  CACHE_DURATION: 5 * 60 * 1000, // 5 minutos
+} as const
+
+
+================================================
+FILE: src/lib/store.ts
+================================================
+import { create } from 'zustand'
+import { devtools, persist } from 'zustand/middleware'
+
+// Tipos para el estado
+interface VideoState {
+  currentVideo: 'idle' | 'talking'
+  isPlaying: boolean
+  isMuted: boolean
+  volume: number
+}
+
+interface UIState {
+  sidebarOpen: boolean
+  theme: 'light' | 'dark' | 'system'
+  reducedMotion: boolean
+  isLoading: boolean
+  error: string | null
+}
+
+interface ContactState {
+  isRecording: boolean
+  isProcessing: boolean
+  hasStartedConversation: boolean
+  lastInteraction: Date | null
+}
+
+interface AppStore extends VideoState, UIState, ContactState {
+  // Video actions
+  setCurrentVideo: (video: 'idle' | 'talking') => void
+  togglePlaying: () => void
+  setMuted: (muted: boolean) => void
+  setVolume: (volume: number) => void
+  
+  // UI actions
+  setSidebarOpen: (open: boolean) => void
+  setTheme: (theme: 'light' | 'dark' | 'system') => void
+  setReducedMotion: (reduced: boolean) => void
+  setLoading: (loading: boolean) => void
+  setError: (error: string | null) => void
+  
+  // Contact actions
+  startRecording: () => void
+  stopRecording: () => void
+  startProcessing: () => void
+  stopProcessing: () => void
+  startConversation: () => void
+  endConversation: () => void
+  updateLastInteraction: () => void
+  
+  // Reset actions
+  resetVideoState: () => void
+  resetContactState: () => void
+  resetAll: () => void
+}
+
+// Estado inicial
+const initialVideoState: VideoState = {
+  currentVideo: 'idle',
+  isPlaying: true,
+  isMuted: true,
+  volume: 0.8,
+}
+
+const initialUIState: UIState = {
+  sidebarOpen: false,
+  theme: 'system',
+  reducedMotion: false,
+  isLoading: false,
+  error: null,
+}
+
+const initialContactState: ContactState = {
+  isRecording: false,
+  isProcessing: false,
+  hasStartedConversation: false,
+  lastInteraction: null,
+}
+
+// Store principal
+export const useAppStore = create<AppStore>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        // Estado inicial
+        ...initialVideoState,
+        ...initialUIState,
+        ...initialContactState,
+
+        // Video actions
+        setCurrentVideo: (video) => {
+          set({ currentVideo: video }, false, 'setCurrentVideo')
+        },
+
+        togglePlaying: () => {
+          set((state) => ({ isPlaying: !state.isPlaying }), false, 'togglePlaying')
+        },
+
+        setMuted: (muted) => {
+          set({ isMuted: muted }, false, 'setMuted')
+        },
+
+        setVolume: (volume) => {
+          set({ volume: Math.max(0, Math.min(1, volume)) }, false, 'setVolume')
+        },
+
+        // UI actions
+        setSidebarOpen: (open) => {
+          set({ sidebarOpen: open }, false, 'setSidebarOpen')
+        },
+
+        setTheme: (theme) => {
+          set({ theme }, false, 'setTheme')
+        },
+
+        setReducedMotion: (reduced) => {
+          set({ reducedMotion: reduced }, false, 'setReducedMotion')
+        },
+
+        setLoading: (loading) => {
+          set({ isLoading: loading }, false, 'setLoading')
+        },
+
+        setError: (error) => {
+          set({ error }, false, 'setError')
+        },
+
+        // Contact actions
+        startRecording: () => {
+          set(
+            {
+              isRecording: true,
+              currentVideo: 'talking',
+              hasStartedConversation: true,
+              lastInteraction: new Date(),
+            },
+            false,
+            'startRecording'
+          )
+        },
+
+        stopRecording: () => {
+          set(
+            {
+              isRecording: false,
+              isProcessing: true,
+              lastInteraction: new Date(),
+            },
+            false,
+            'stopRecording'
+          )
+        },
+
+        startProcessing: () => {
+          set({ isProcessing: true }, false, 'startProcessing')
+        },
+
+        stopProcessing: () => {
+          set(
+            {
+              isProcessing: false,
+              currentVideo: 'idle',
+              lastInteraction: new Date(),
+            },
+            false,
+            'stopProcessing'
+          )
+        },
+
+        startConversation: () => {
+          set(
+            {
+              hasStartedConversation: true,
+              currentVideo: 'talking',
+              lastInteraction: new Date(),
+            },
+            false,
+            'startConversation'
+          )
+        },
+
+        endConversation: () => {
+          // Delay para volver al estado idle después de la conversación
+          setTimeout(() => {
+            const currentState = get()
+            if (!currentState.isRecording && !currentState.isProcessing) {
+              set({ currentVideo: 'idle' }, false, 'endConversation')
+            }
+          }, 2000)
+          
+          set(
+            {
+              hasStartedConversation: false,
+              lastInteraction: new Date(),
+            },
+            false,
+            'endConversationImmediate'
+          )
+        },
+
+        updateLastInteraction: () => {
+          set({ lastInteraction: new Date() }, false, 'updateLastInteraction')
+        },
+
+        // Reset actions
+        resetVideoState: () => {
+          set(initialVideoState, false, 'resetVideoState')
+        },
+
+        resetContactState: () => {
+          set(initialContactState, false, 'resetContactState')
+        },
+
+        resetAll: () => {
+          set(
+            {
+              ...initialVideoState,
+              ...initialUIState,
+              ...initialContactState,
+            },
+            false,
+            'resetAll'
+          )
+        },
+      }),
+      {
+        name: 'intelcobro-storage',
+        partialize: (state) => ({
+          // Solo persistir configuraciones del usuario
+          theme: state.theme,
+          reducedMotion: state.reducedMotion,
+          volume: state.volume,
+          isMuted: state.isMuted,
+        }),
+      }
+    ),
+    {
+      name: 'intelcobro-store',
+    }
+  )
+)
+
+// Hooks específicos para partes del estado
+export const useVideoStore = () => {
+  const {
+    currentVideo,
+    isPlaying,
+    isMuted,
+    volume,
+    setCurrentVideo,
+    togglePlaying,
+    setMuted,
+    setVolume,
+    resetVideoState,
+  } = useAppStore()
+
+  return {
+    currentVideo,
+    isPlaying,
+    isMuted,
+    volume,
+    setCurrentVideo,
+    togglePlaying,
+    setMuted,
+    setVolume,
+    resetVideoState,
+  }
+}
+
+export const useUIStore = () => {
+  const {
+    sidebarOpen,
+    theme,
+    reducedMotion,
+    isLoading,
+    error,
+    setSidebarOpen,
+    setTheme,
+    setReducedMotion,
+    setLoading,
+    setError,
+  } = useAppStore()
+
+  return {
+    sidebarOpen,
+    theme,
+    reducedMotion,
+    isLoading,
+    error,
+    setSidebarOpen,
+    setTheme,
+    setReducedMotion,
+    setLoading,
+    setError,
+  }
+}
+
+export const useContactStore = () => {
+  const {
+    isRecording,
+    isProcessing,
+    hasStartedConversation,
+    lastInteraction,
+    startRecording,
+    stopRecording,
+    startProcessing,
+    stopProcessing,
+    startConversation,
+    endConversation,
+    updateLastInteraction,
+    resetContactState,
+  } = useAppStore()
+
+  return {
+    isRecording,
+    isProcessing,
+    hasStartedConversation,
+    lastInteraction,
+    startRecording,
+    stopRecording,
+    startProcessing,
+    stopProcessing,
+    startConversation,
+    endConversation,
+    updateLastInteraction,
+    resetContactState,
+  }
+}
+
+// Selector para estado combinado
+export const useCombinedState = () => {
+  const { currentVideo, isRecording, isProcessing } = useAppStore()
+  
+  return {
+    shouldShowTalkingVideo: currentVideo === 'talking' || isRecording || isProcessing,
+    shouldShowIdleVideo: currentVideo === 'idle' && !isRecording && !isProcessing,
+    isInteracting: isRecording || isProcessing,
+  }
+}
+
+
+================================================
+FILE: src/lib/utils.ts
+================================================
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+/**
+ * Función para combinar clases de Tailwind CSS de manera inteligente
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+/**
+ * Función para formatear delays en animaciones
+ */
+export function formatDelay(index: number, baseDelay: number = 100): number {
+  return index * baseDelay
+}
+
+/**
+ * Función para detectar si un dispositivo soporta hover
+ */
+export function supportsHover(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(hover: hover)').matches
+}
+
+/**
+ * Función para verificar si el dispositivo prefiere animaciones reducidas
+ */
+export function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/**
+ * Función para validar si un video puede reproducirse
+ */
+export function canPlayVideo(): boolean {
+  if (typeof document === 'undefined') return false
+  const video = document.createElement('video')
+  return !!(video.canPlayType && video.canPlayType('video/mp4; codecs="avc1.42E01E"').replace(/no/, ''))
+}
+
+/**
+ * Función para detectar el tipo de fondo del video
+ */
+export function detectVideoBackground(videoElement: HTMLVideoElement): 'black' | 'white' | 'transparent' {
+  // Crear canvas temporal para analizar el primer frame
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  
+  if (!ctx) return 'transparent'
+  
+  canvas.width = videoElement.videoWidth
+  canvas.height = videoElement.videoHeight
+  
+  ctx.drawImage(videoElement, 0, 0)
+  
+  // Analizar las esquinas del video
+  const corners = [
+    ctx.getImageData(0, 0, 1, 1).data,
+    ctx.getImageData(canvas.width - 1, 0, 1, 1).data,
+    ctx.getImageData(0, canvas.height - 1, 1, 1).data,
+    ctx.getImageData(canvas.width - 1, canvas.height - 1, 1, 1).data,
+  ]
+  
+  const isBlack = corners.every(pixel => {
+    const r = pixel[0] || 0
+    const g = pixel[1] || 0
+    const b = pixel[2] || 0
+    return r < 50 && g < 50 && b < 50
+  })
+  
+  const isWhite = corners.every(pixel => {
+    const r = pixel[0] || 0
+    const g = pixel[1] || 0
+    const b = pixel[2] || 0
+    return r > 200 && g > 200 && b > 200
+  })
+  
+  if (isBlack) return 'black'
+  if (isWhite) return 'white'
+  return 'transparent'
+}
+
+/**
+ * Función para aplicar filtros de remoción de fondo
+ */
+export function applyBackgroundRemoval(
+  element: HTMLVideoElement, 
+  backgroundType: 'black' | 'white' | 'transparent'
+): void {
+  switch (backgroundType) {
+    case 'black':
+      element.style.mixBlendMode = 'screen'
+      element.style.filter = 'contrast(1.2) brightness(1.1)'
+      break
+    case 'white':
+      element.style.mixBlendMode = 'multiply'
+      element.style.filter = 'contrast(1.3) brightness(0.9)'
+      break
+    default:
+      element.style.mixBlendMode = 'normal'
+      element.style.filter = 'none'
+  }
+}
+
+/**
+ * Función para crear un observer de intersección optimizado
+ */
+export function createIntersectionObserver(
+  callback: IntersectionObserverCallback,
+  options?: IntersectionObserverInit
+): IntersectionObserver {
+  const defaultOptions: IntersectionObserverInit = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.1,
+    ...options
+  }
+  
+  return new IntersectionObserver(callback, defaultOptions)
+}
+
+/**
+ * Función para debounce de eventos
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout
+  
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => func(...args), wait)
+  }
+}
+
+/**
+ * Función para throttle de eventos
+ */
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean
+  
+  return (...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func(...args)
+      inThrottle = true
+      setTimeout(() => inThrottle = false, limit)
+    }
+  }
+}
+
+/**
+ * Función para generar IDs únicos
+ */
+export function generateId(prefix: string = 'id'): string {
+  return `${prefix}-${Math.random().toString(36).substr(2, 9)}`
+}
+
+/**
+ * Función para formatear errores de manera consistente
+ */
+export function formatError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+  if (typeof error === 'string') {
+    return error
+  }
+  return 'Ha ocurrido un error inesperado'
+}
+
+/**
+ * Función para validar URLs
+ */
+export function isValidUrl(string: string): boolean {
+  try {
+    new URL(string)
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
+/**
+ * Función para obtener el contraste de color
+ */
+export function getContrastRatio(foreground: string, background: string): number {
+  // Implementación simplificada del contraste WCAG
+  const getLuminance = (color: string): number => {
+    // Convertir hex a RGB y calcular luminancia
+    const hex = color.replace('#', '')
+    const r = parseInt(hex.substr(0, 2), 16)
+    const g = parseInt(hex.substr(2, 2), 16)
+    const b = parseInt(hex.substr(4, 2), 16)
+    
+    const [rs, gs, bs] = [r, g, b].map(c => {
+      c = c / 255
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+    })
+    
+    return 0.2126 * (rs || 0) + 0.7152 * (gs || 0) + 0.0722 * (bs || 0)
+  }
+  
+  const l1 = getLuminance(foreground)
+  const l2 = getLuminance(background)
+  
+  const lighter = Math.max(l1, l2)
+  const darker = Math.min(l1, l2)
+  
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+
+================================================
+FILE: src/types/index.ts
+================================================
+// Tipos principales de la aplicación
+export interface NavigationItem {
+  id: string
+  label: string
+  href: string
+  active?: boolean
+  external?: boolean
+  icon?: string
+}
+
+export interface HeroContent {
+  title: string
+  subtitle?: string
+  description?: string
+  ctaText: string
+  ctaLink: string
+  backgroundEffect?: 'aurora' | 'water' | 'particles' | 'gradient'
+}
+
+export interface SEOConfig {
+  title: string
+  description: string
+  keywords: string[]
+  ogImage?: string
+  twitterCard?: string
+  canonicalUrl?: string
+}
+
+export interface ThemeConfig {
+  mode: 'light' | 'dark' | 'system'
+  colors: {
+    primary: string
+    secondary: string
+    accent: string
+    background: string
+    foreground: string
+  }
+}
+
+export interface AnimationConfig {
+  enabled: boolean
+  duration: 'fast' | 'normal' | 'slow'
+  reducedMotion: boolean
+  stagger: boolean
+}
+
+export interface ContentData {
+  [key: string]: any
+}
+
+export interface APIResponse<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
+
+export interface ContactFormData {
+  name: string
+  email: string
+  phone?: string
+  company?: string
+  message: string
+  service?: string
+  preferredContact?: 'email' | 'phone' | 'whatsapp'
+}
+
+export interface ErrorBoundaryState {
+  hasError: boolean
+  error?: Error
+  errorInfo?: React.ErrorInfo
+}
+
+// Re-exportar tipos de video
+export * from './video'
+
+
+================================================
+FILE: src/types/video.ts
+================================================
+// Tipos para el sistema de videos
+export interface VideoConfig {
+  idle: string
+  talking: string
+  poster?: string
+  autoPlay?: boolean
+  loop?: boolean
+  muted?: boolean
+  controls?: boolean
+  playsInline?: boolean
+  removeBackground?: boolean
+  backgroundType?: 'black' | 'white' | 'transparent'
+}
+
+export interface VideoPlayerProps {
+  config: VideoConfig
+  className?: string
+  onLoad?: () => void
+  onError?: (error: string) => void
+  onVideoChange?: (videoType: 'idle' | 'talking') => void
+}
+
+export interface VideoState {
+  currentVideo: 'idle' | 'talking'
+  isPlaying: boolean
+  isMuted: boolean
+  volume: number
+  isLoading: boolean
+  error: string | null
+}
+
+// Interfaz simplificada para VideoElement
+export interface VideoElement {
+  requestVideoFrameCallback?: (callback: VideoFrameRequestCallback) => number
+  cancelVideoFrameCallback?: (handle: number) => void
+}
+
+export type VideoFrameRequestCallback = (
+  now: DOMHighResTimeStamp, 
+  metadata: VideoFrameCallbackMetadata
+) => void
+
+export interface VideoFrameCallbackMetadata {
+  presentationTime: DOMHighResTimeStamp
+  expectedDisplayTime: DOMHighResTimeStamp
+  width: number
+  height: number
+  mediaTime: number
+  presentedFrames: number
+  processingDuration?: number
+}
+
+export interface BackgroundRemovalOptions {
+  type: 'black' | 'white' | 'transparent'
+  threshold?: number
+  softness?: number
+  spill?: number
+}
+
+export interface VideoTransitionOptions {
+  duration?: number
+  easing?: string
+  delay?: number
+}
+
+export interface VideoAnalytics {
+  loadTime: number
+  playTime: number
+  switchCount: number
+  errorCount: number
+  lastSwitch: Date | null
+}
+
