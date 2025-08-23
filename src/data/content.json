@@ -230,5 +230,204 @@
       "ogImage": "/images/services-og.jpg",
       "twitterCard": "summary_large_image"
     }
+  },
+
+  "trabajar": {
+    "hero": {
+      "title": "Trabaja con Nosotros",
+      "subtitle": "¡Destaca en Intelcobro!",
+      "description": "Si tienes talento, confianza y ambición de llegar alto. Envíanos tu hoja de vida a talentohumano@intelcobro.com y sé parte de un equipo que impulsa tu crecimiento y celebra tus éxitos.",
+      "backgroundEffect": "aurora"
+    },
+    "form": {
+      "title": "Envía tu hoja de vida",
+      "fields": [
+        {
+          "name": "fullName",
+          "label": "Nombre Completo",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ingresa tu nombre completo",
+          "validation": {
+            "minLength": 2,
+            "maxLength": 100,
+            "pattern": "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$"
+          }
+        },
+        {
+          "name": "email",
+          "label": "Email",
+          "type": "email",
+          "required": true,
+          "placeholder": "tu@email.com",
+          "validation": {
+            "maxLength": 100
+          }
+        },
+        {
+          "name": "position",
+          "label": "Puesto de Interés",
+          "type": "select",
+          "required": true,
+          "placeholder": "Selecciona una posición",
+          "options": [
+            "Especialista en Cobranza",
+            "Agente de Contact Center",
+            "Analista de Crédito",
+            "Supervisor de Operaciones",
+            "Desarrollador de Software",
+            "Asistente Administrativo",
+            "Coordinador de Calidad",
+            "Otro"
+          ]
+        },
+        {
+          "name": "cv",
+          "label": "Curriculum Vitae",
+          "type": "file",
+          "required": true,
+          "accept": ".pdf,.doc,.docx",
+          "maxSize": "5MB",
+          "description": "Formatos permitidos: PDF, DOC, DOCX (máx. 5MB)"
+        }
+      ],
+      "submitText": "Enviar Aplicación",
+      "successMessage": "¡Aplicación enviada exitosamente! Recibirás un email de confirmación.",
+      "errorMessage": "Error al enviar la aplicación. Por favor, intenta nuevamente."
+    },
+    "socialLinks": [
+      {
+        "platform": "linkedin",
+        "url": "https://linkedin.com/company/intelcobro",
+        "icon": "linkedin",
+        "color": "#0A66C2"
+      },
+      {
+        "platform": "instagram",
+        "url": "https://instagram.com/intelcobro",
+        "icon": "instagram",
+        "color": "#E4405F"
+      },
+      {
+        "platform": "facebook",
+        "url": "https://facebook.com/intelcobro",
+        "icon": "facebook",
+        "color": "#1877F2"
+      },
+      {
+        "platform": "tiktok",
+        "url": "https://tiktok.com/@intelcobro",
+        "icon": "music",
+        "color": "#000000"
+      }
+    ],
+    "locations": [
+      {
+        "city": "Quito",
+        "address": "Av. De La República 500 y pasaje Carrión, Edificio PUCARÁ, piso 12.",
+        "coordinates": {
+          "lat": -0.1807,
+          "lng": -78.4678
+        }
+      },
+      {
+        "city": "Guayaquil",
+        "address": "Av. Carlos Julio Arosemena Km. 2.5 y las Monjas, Edificio GRANASA, piso 5.",
+        "coordinates": {
+          "lat": -2.1962,
+          "lng": -79.8862
+        }
+      }
+    ],
+    "benefits": [
+      {
+        "id": "growth",
+        "title": "Crecimiento Profesional",
+        "description": "Impulsa tu carrera con oportunidades de desarrollo continuo",
+        "icon": "trending-up",
+        "color": "blue"
+      },
+      {
+        "id": "environment",
+        "title": "Ambiente Laboral",
+        "description": "Trabaja en un ambiente dinámico y colaborativo",
+        "icon": "users",
+        "color": "green"
+      },
+      {
+        "id": "innovation",
+        "title": "Innovación",
+        "description": "Forma parte de proyectos tecnológicos de vanguardia",
+        "icon": "lightbulb",
+        "color": "yellow"
+      },
+      {
+        "id": "recognition",
+        "title": "Reconocimiento",
+        "description": "Celebramos tus logros y éxitos profesionales",
+        "icon": "award",
+        "color": "purple"
+      }
+    ],
+    "positions": [
+      {
+        "id": "cobranza",
+        "title": "Especialista en Cobranza",
+        "department": "Operaciones",
+        "type": "Tiempo completo",
+        "experience": "2+ años",
+        "location": "Quito/Guayaquil",
+        "description": "Gestión y recuperación de cartera vencida con técnicas especializadas.",
+        "requirements": [
+          "Experiencia en cobranza o ventas",
+          "Excelente comunicación verbal",
+          "Orientación a resultados",
+          "Manejo de herramientas digitales"
+        ]
+      },
+      {
+        "id": "contact-center",
+        "title": "Agente de Contact Center",
+        "department": "Atención al Cliente",
+        "type": "Tiempo completo",
+        "experience": "1+ año",
+        "location": "Quito/Guayaquil",
+        "description": "Atención telefónica especializada para gestión de cobranza.",
+        "requirements": [
+          "Experiencia en call center",
+          "Habilidades de comunicación",
+          "Paciencia y empatía",
+          "Disponibilidad horaria"
+        ]
+      },
+      {
+        "id": "analista-credito",
+        "title": "Analista de Crédito",
+        "department": "Riesgos",
+        "type": "Tiempo completo",
+        "experience": "3+ años",
+        "location": "Quito",
+        "description": "Evaluación y análisis de riesgo crediticio para toma de decisiones.",
+        "requirements": [
+          "Formación en Finanzas o Economía",
+          "Experiencia en análisis crediticio",
+          "Manejo de herramientas estadísticas",
+          "Conocimiento de normativas financieras"
+        ]
+      }
+    ],
+    "contact": {
+      "email": "talentohumano@intelcobro.com",
+      "phone": "02-234-5678",
+      "whatsapp": "+593987654321",
+      "businessHours": "Lunes a Viernes, 8:00 AM - 6:00 PM"
+    },
+    "seo": {
+      "title": "Trabaja con Nosotros - Intelcobro",
+      "description": "¡Destaca en Intelcobro! Si tienes talento, confianza y ambición de llegar alto, únete a nuestro equipo.",
+      "keywords": ["empleo", "trabajo", "carreras", "recursos humanos", "intelcobro", "oportunidades laborales"],
+      "ogImage": "/images/careers-og.jpg",
+      "twitterCard": "summary_large_image"
+    }
   }
 }

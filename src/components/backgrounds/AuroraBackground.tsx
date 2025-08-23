@@ -31,25 +31,67 @@ export function AuroraBackground({
   const { reducedMotion } = useUIStore()
   const [isVisible, setIsVisible] = useState(true)
   const [isClient, setIsClient] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
-  // Ensure client-side rendering
+  // Ensure client-side rendering and detect mobile
   useEffect(() => {
     setIsClient(true)
+    
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Configuration based on intensity
-  const config = {
-    low: { bands: 3, opacity: 0.2, movement: 0.5 },
-    medium: { bands: 5, opacity: 0.4, movement: 1 },
-    high: { bands: 7, opacity: 0.6, movement: 1.5 },
-  }[intensity]
+  // Responsive configuration based on intensity and screen size
+  const getConfig = () => {
+    const baseConfig = {
+      low: { bands: 3, opacity: 0.2, movement: 0.5 },
+      medium: { bands: 5, opacity: 0.4, movement: 1 },
+      high: { bands: 7, opacity: 0.6, movement: 1.5 },
+    }[intensity]
 
-  // Speed configuration
-  const speedMultiplier = {
-    slow: 0.5,
-    normal: 1,
-    fast: 1.5,
-  }[speed]
+    // Reduce complexity on mobile for better performance
+    if (isMobile) {
+      return {
+        bands: Math.max(2, Math.ceil(baseConfig.bands * 0.6)),
+        opacity: baseConfig.opacity * 0.8,
+        movement: baseConfig.movement * 0.7,
+      }
+    }
+
+    return baseConfig
+  }
+
+  const config = getConfig()
+
+  // Responsive speed configuration
+  const getSpeedMultiplier = () => {
+    const baseSpeed = {
+      slow: 0.5,
+      normal: 1,
+      fast: 1.5,
+    }[speed]
+
+    // Slower on mobile for better battery life
+    return isMobile ? baseSpeed * 0.8 : baseSpeed
+  }
+
+  const speedMultiplier = getSpeedMultiplier()
+
+  // Responsive blur
+  const getResponsiveBlur = () => {
+    if (isMobile) {
+      return Math.max(20, blur * 0.6) // Reduce blur on mobile
+    }
+    return blur
+  }
+
+  const responsiveBlur = getResponsiveBlur()
 
   useEffect(() => {
     if (!isClient) return
@@ -72,10 +114,10 @@ export function AuroraBackground({
       opacity: number
     }> = []
 
-    // Function to resize canvas
+    // Responsive canvas setup
     const resizeCanvas = () => {
       const rect = canvas.getBoundingClientRect()
-      const devicePixelRatio = window.devicePixelRatio || 1
+      const devicePixelRatio = isMobile ? Math.min(window.devicePixelRatio || 1, 2) : window.devicePixelRatio || 1
       
       canvas.width = rect.width * devicePixelRatio
       canvas.height = rect.height * devicePixelRatio
@@ -85,7 +127,7 @@ export function AuroraBackground({
       canvas.style.height = rect.height + 'px'
     }
 
-    // Initialize aurora waves
+    // Initialize aurora waves with responsive sizing
     const initializeWaves = () => {
       waves.length = 0
       const canvasWidth = canvas.offsetWidth
@@ -96,11 +138,16 @@ export function AuroraBackground({
         const colorIndex = i % colors.length
         const selectedColor = colors[colorIndex] || 'rgba(147, 197, 253, 0.3)'
         
+        // Responsive wave sizing
+        const waveMultiplier = isMobile ? 1.2 : 1.5
+        const heightRange = isMobile ? 60 : 80
+        const heightVariation = isMobile ? 80 : 120
+        
         waves.push({
           x: Math.random() * canvasWidth,
-          y: (canvasHeight / config.bands) * i + Math.random() * 100,
-          width: canvasWidth * (1.5 + Math.random() * 2),
-          height: 80 + Math.random() * 120,
+          y: (canvasHeight / config.bands) * i + Math.random() * (isMobile ? 50 : 100),
+          width: canvasWidth * (waveMultiplier + Math.random() * (isMobile ? 1 : 2)),
+          height: heightRange + Math.random() * heightVariation,
           speed: (0.5 + Math.random() * 1) * speedMultiplier,
           color: selectedColor,
           angle: Math.random() * Math.PI * 2,
@@ -109,7 +156,7 @@ export function AuroraBackground({
       }
     }
 
-    // Animation function
+    // Optimized animation function
     const animate = () => {
       if (!isVisible || reducedMotion) return
 
@@ -119,16 +166,16 @@ export function AuroraBackground({
       // Clear canvas
       ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
-      // Draw each aurora band
+      // Draw each aurora band with mobile optimizations
       waves.forEach((wave, index) => {
         // Update position
         wave.x += wave.speed * config.movement
-        wave.angle += 0.01 * wave.speed
+        wave.angle += (isMobile ? 0.005 : 0.01) * wave.speed
 
         // Reset wave when it goes off screen
         if (wave.x > canvasWidth + wave.width) {
           wave.x = -wave.width
-          wave.y = (canvasHeight / config.bands) * index + Math.random() * 100
+          wave.y = (canvasHeight / config.bands) * index + Math.random() * (isMobile ? 50 : 100)
         }
 
         // Create gradient
@@ -145,16 +192,21 @@ export function AuroraBackground({
         gradient.addColorStop(0.7, baseColor)
         gradient.addColorStop(1, 'transparent')
 
-        // Configure filters
-        ctx.filter = `blur(${blur}px)`
+        // Configure filters with responsive blur
+        ctx.filter = `blur(${responsiveBlur}px)`
         ctx.globalCompositeOperation = 'screen'
 
-        // Draw wave
+        // Draw wave with reduced complexity on mobile
         ctx.fillStyle = gradient
         ctx.save()
         ctx.translate(wave.x + wave.width / 2, wave.y + wave.height / 2)
-        ctx.rotate(Math.sin(wave.angle) * 0.1)
-        ctx.scale(1 + Math.sin(time * 0.001 + index) * 0.1, 1)
+        
+        // Reduce rotation complexity on mobile
+        const rotationIntensity = isMobile ? 0.05 : 0.1
+        ctx.rotate(Math.sin(wave.angle) * rotationIntensity)
+        
+        const scaleIntensity = isMobile ? 0.05 : 0.1
+        ctx.scale(1 + Math.sin(time * 0.001 + index) * scaleIntensity, 1)
         
         ctx.beginPath()
         ctx.ellipse(
@@ -174,7 +226,7 @@ export function AuroraBackground({
         ctx.globalCompositeOperation = 'source-over'
       })
 
-      time += 16 * speedMultiplier
+      time += (isMobile ? 12 : 16) * speedMultiplier
       animationFrameRef.current = requestAnimationFrame(animate)
     }
 
@@ -196,13 +248,17 @@ export function AuroraBackground({
     }
     observer.observe(canvas)
 
-    // Event listeners
+    // Responsive event listeners
     const handleResize = () => {
-      resizeCanvas()
-      initializeWaves()
+      // Debounce resize for better performance
+      clearTimeout(handleResize.timeout)
+      handleResize.timeout = setTimeout(() => {
+        resizeCanvas()
+        initializeWaves()
+      }, 250)
     }
 
-    window.addEventListener('resize', handleResize)
+    window.addEventListener('resize', handleResize, { passive: true })
 
     // Cleanup
     return () => {
@@ -211,10 +267,11 @@ export function AuroraBackground({
       }
       observer.disconnect()
       window.removeEventListener('resize', handleResize)
+      clearTimeout(handleResize.timeout)
     }
-  }, [intensity, speed, blur, reducedMotion, isVisible, colors, config, speedMultiplier, isClient])
+  }, [intensity, speed, responsiveBlur, reducedMotion, isVisible, colors, config, speedMultiplier, isClient, isMobile])
 
-  // Render static version if reduced motion is preferred or not client-side
+  // Responsive static version for reduced motion or SSR
   if (reducedMotion || !isClient) {
     return (
       <div className={cn("absolute inset-0 overflow-hidden", className)}>
@@ -234,12 +291,15 @@ export function AuroraBackground({
         }}
       />
       
-      {/* Overlay gradient to improve readability */}
+      {/* Responsive overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10" />
       
-      {/* Additional particle effects (optional) */}
-      <div className="absolute inset-0 opacity-30">
-        {Array.from({ length: 20 }).map((_, i) => {
+      {/* Responsive particle effects */}
+      <div className={cn(
+        "absolute inset-0",
+        isMobile ? "opacity-20" : "opacity-30"
+      )}>
+        {Array.from({ length: isMobile ? 10 : 20 }).map((_, i) => {
           // Generate consistent but random positions for SSR
           const left = (i * 17.3) % 100
           const top = (i * 23.7) % 100
@@ -249,7 +309,10 @@ export function AuroraBackground({
           return (
             <div
               key={i}
-              className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+              className={cn(
+                "absolute bg-white rounded-full animate-pulse",
+                isMobile ? "w-0.5 h-0.5" : "w-1 h-1"
+              )}
               style={{
                 left: `${left}%`,
                 top: `${top}%`,
@@ -264,12 +327,26 @@ export function AuroraBackground({
   )
 }
 
-// Specialized component for hero sections
+// Specialized responsive component for hero sections
 export function HeroAuroraBackground({ className, ...props }: AuroraBackgroundProps) {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   return (
     <AuroraBackground
-      intensity="high"
+      intensity={isMobile ? "medium" : "high"}
       speed="normal"
+      blur={isMobile ? 30 : 50}
       colors={[
         'rgba(59, 130, 246, 0.4)',   // blue-500
         'rgba(147, 51, 234, 0.4)',   // purple-600
@@ -283,13 +360,26 @@ export function HeroAuroraBackground({ className, ...props }: AuroraBackgroundPr
   )
 }
 
-// Component for subtle backgrounds
+// Responsive component for subtle backgrounds
 export function SubtleAuroraBackground({ className, ...props }: AuroraBackgroundProps) {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   return (
     <AuroraBackground
       intensity="low"
       speed="slow"
-      blur={80}
+      blur={isMobile ? 40 : 80}
       colors={[
         'rgba(147, 197, 253, 0.15)',  // blue-300
         'rgba(196, 181, 253, 0.15)',  // purple-300
@@ -299,4 +389,11 @@ export function SubtleAuroraBackground({ className, ...props }: AuroraBackground
       {...props}
     />
   )
+}
+
+// TypeScript declaration augmentation for timeout
+declare global {
+  interface Function {
+    timeout?: NodeJS.Timeout
+  }
 }
