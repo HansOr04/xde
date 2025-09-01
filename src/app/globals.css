@@ -927,3 +927,134 @@ body {
   background: rgba(var(--primary-rgb), 0.3);
   color: white;
 }
+
+/* Efectos de texto con sombra 3D */
+.text-shadow-lg {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Gradiente radial personalizado */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+/* Animación de rotación para la ruleta */
+@keyframes spin-wheel {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-wheel {
+  animation: spin-wheel 3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Efectos de partículas flotantes mejorados */
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-10px) translateX(5px);
+  }
+  50% {
+    transform: translateY(-5px) translateX(-5px);
+  }
+  75% {
+    transform: translateY(-15px) translateX(3px);
+  }
+}
+
+.animate-float-gentle {
+  animation: float-gentle 4s ease-in-out infinite;
+}
+
+/* Mejoras para las tarjetas de descuento */
+.discount-card-3d {
+  box-shadow: 
+    0 4px 0 rgba(0, 0, 0, 0.2),
+    0 8px 0 rgba(0, 0, 0, 0.15),
+    0 12px 0 rgba(0, 0, 0, 0.1),
+    0 16px 0 rgba(0, 0, 0, 0.05),
+    0 20px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Animaciones de entrada escalonada */
+@keyframes stagger-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-stagger-in {
+  animation: stagger-in 0.6s ease-out forwards;
+}
+
+/* Efecto de brillo para el botón de girar */
+@keyframes shimmer-spin {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.btn-spin-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-spin 2s infinite;
+}
+
+/* Mejoras para modo oscuro y accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin-wheel,
+  .animate-float-gentle,
+  .animate-stagger-in {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Responsividad mejorada para dispositivos pequeños */
+@media (max-width: 640px) {
+  .discount-card-mobile {
+    width: 12rem;
+    height: 16rem;
+    font-size: 0.875rem;
+  }
+  
+  .discount-number-mobile {
+    font-size: 4rem;
+  }
+  
+  .spin-center-mobile {
+    width: 8rem;
+    height: 8rem;
+    font-size: 1rem;
+  }
+}
+
+/* Efectos de hover mejorados */
+.hover-glow-green:hover {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.6),
+              0 0 40px rgba(34, 197, 94, 0.4);
+}
+
+.hover-glow-red:hover {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.6),
+              0 0 40px rgba(239, 68, 68, 0.4);
+}

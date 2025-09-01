@@ -28,27 +28,31 @@
           "id": "inicio",
           "label": "Inicio",
           "href": "/",
-          "active": true
+          "active": false
         },
         {
           "id": "servicios",
           "label": "Servicios",
-          "href": "/servicios"
+          "href": "/servicios",
+          "active": false
         },
         {
           "id": "trabajar",
           "label": "Trabaja con nosotros",
-          "href": "/trabajar"
+          "href": "/trabajar",
+          "active": false
         },
         {
           "id": "solucionar",
           "label": "Soluciona tu deuda",
-          "href": "/solucionar"
+          "href": "/solucionar",
+          "active": false
         },
         {
           "id": "proteccion",
           "label": "Protección de datos",
-          "href": "/proteccion"
+          "href": "/proteccion",
+          "active": false
         }
       ]
     },
@@ -427,6 +431,140 @@
       "description": "¡Destaca en Intelcobro! Si tienes talento, confianza y ambición de llegar alto, únete a nuestro equipo.",
       "keywords": ["empleo", "trabajo", "carreras", "recursos humanos", "intelcobro", "oportunidades laborales"],
       "ogImage": "/images/careers-og.jpg",
+      "twitterCard": "summary_large_image"
+    }
+  },
+
+  "solucionar": {
+    "hero": {
+      "title": "Soluciona tu Deuda",
+      "subtitle": "Te ayudamos a encontrar la mejor solución para tu situación financiera",
+      "backgroundEffect": "aurora"
+    },
+    "wheel": {
+      "title": "¡Felicidades!",
+      "subtitle": "¡Felicitaciones! Ganaste {discount}% OFF",
+      "description": "Menciona este descuento al solicitar tu asesoría",
+      "buttonText": "GIRAR",
+      "discounts": [
+        {
+          "id": 1,
+          "text": "DESCUENTO",
+          "value": 10,
+          "suffix": "% OFF",
+          "color": "red"
+        },
+        {
+          "id": 2,
+          "text": "DESCUENTO",
+          "value": 15,
+          "suffix": "% OFF",
+          "color": "green"
+        },
+        {
+          "id": 3,
+          "text": "DESCUENTO",
+          "value": 20,
+          "suffix": "% OFF",
+          "color": "red"
+        },
+        {
+          "id": 4,
+          "text": "DESCUENTO",
+          "value": 10,
+          "suffix": "% OFF",
+          "color": "green"
+        },
+        {
+          "id": 5,
+          "text": "DESCUENTO",
+          "value": 25,
+          "suffix": "% OFF",
+          "color": "red"
+        },
+        {
+          "id": 6,
+          "text": "DESCUENTO",
+          "value": 25,
+          "suffix": "% OFF",
+          "color": "green"
+        },
+        {
+          "id": 7,
+          "text": "DESCUENTO",
+          "value": 20,
+          "suffix": "% OFF",
+          "color": "red"
+        },
+        {
+          "id": 8,
+          "text": "DESCUENTO",
+          "value": 15,
+          "suffix": "% OFF",
+          "color": "green"
+        }
+      ]
+    },
+    "form": {
+      "title": "Solicita Asesoría Gratuita",
+      "fields": [
+        {
+          "name": "cedula",
+          "label": "Cédula",
+          "type": "text",
+          "required": true,
+          "placeholder": "Cédula",
+          "validation": {
+            "pattern": "^[0-9]{10}$",
+            "message": "Cédula debe tener 10 dígitos"
+          }
+        },
+        {
+          "name": "fullName",
+          "label": "Nombre Completo",
+          "type": "text",
+          "required": true,
+          "placeholder": "Nombre Completo",
+          "validation": {
+            "minLength": 2,
+            "maxLength": 100
+          }
+        },
+        {
+          "name": "phone",
+          "label": "Celular",
+          "type": "tel",
+          "required": true,
+          "placeholder": "Celular",
+          "validation": {
+            "pattern": "^[0-9]{10}$",
+            "message": "Celular debe tener 10 dígitos"
+          }
+        },
+        {
+          "name": "email",
+          "label": "Gmail",
+          "type": "email",
+          "required": true,
+          "placeholder": "Gmail",
+          "validation": {
+            "maxLength": 100
+          }
+        }
+      ],
+      "submitText": "Solicitar Asesoría",
+      "successMessage": "¡Solicitud enviada exitosamente! Te contactaremos pronto.",
+      "errorMessage": "Error al enviar la solicitud. Por favor, intenta nuevamente."
+    },
+    "contact": {
+      "micIcon": true,
+      "micTooltip": "Habla con nosotros"
+    },
+    "seo": {
+      "title": "Soluciona tu Deuda - Intelcobro",
+      "description": "Te ayudamos a encontrar la mejor solución para tu situación financiera. Obtén descuentos especiales en nuestros servicios.",
+      "keywords": ["solución de deudas", "asesoría financiera", "descuentos", "refinanciamiento", "negociación de deudas"],
+      "ogImage": "/images/solucionar-og.jpg",
       "twitterCard": "summary_large_image"
     }
   }
