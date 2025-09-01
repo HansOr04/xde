@@ -8,16 +8,16 @@
       "ctaLink": "/contacto",
       "backgroundEffect": "aurora",
       "professionalVideo": {
-        "idle": "/videos/professional-woman-idle.mp4",
-        "talking": "/videos/professional-woman-talking.mp4",
+        "idle": "/gifs/professional-woman-idle.gif",
+        "talking": "/gifs/professional-woman-talking.gif",
         "poster": "/images/professional-woman-poster.jpg",
         "autoPlay": true,
         "loop": true,
         "muted": true,
         "controls": false,
         "playsInline": true,
-        "removeBackground": true,
-        "backgroundType": "black"
+        "removeBackground": false,
+        "backgroundType": "transparent"
       }
     },
     "navigation": {
@@ -28,7 +28,7 @@
           "id": "inicio",
           "label": "Inicio",
           "href": "/",
-          "active": false
+          "active": true
         },
         {
           "id": "servicios",
@@ -439,6 +439,7 @@
     "hero": {
       "title": "Soluciona tu Deuda",
       "subtitle": "Te ayudamos a encontrar la mejor solución para tu situación financiera",
+      "description": "¡Gira la ruleta y obtén un descuento especial para negociar tu deuda!",
       "backgroundEffect": "aurora"
     },
     "wheel": {
@@ -505,6 +506,38 @@
         }
       ]
     },
+    "roulette": {
+      "title": "¡Gira y Gana tu Descuento!",
+      "subtitle": "Obtén hasta 15% de descuento en tu negociación",
+      "segments": [
+        {
+          "id": "discount-5",
+          "label": "5% OFF",
+          "value": 5,
+          "color": "#3498db",
+          "probability": 0.4
+        },
+        {
+          "id": "discount-10",
+          "label": "10% OFF",
+          "value": 10,
+          "color": "#27ae60",
+          "probability": 0.35
+        },
+        {
+          "id": "discount-15",
+          "label": "15% OFF",
+          "value": 15,
+          "color": "#e74c3c",
+          "probability": 0.25
+        }
+      ],
+      "alwaysWins": true,
+      "guaranteedDiscount": 10,
+      "spinButtonText": "¡Girar Ruleta!",
+      "spinningText": "Girando...",
+      "resultText": "¡Ganaste {discount}% OFF!"
+    },
     "form": {
       "title": "Solicita Asesoría Gratuita",
       "fields": [
@@ -556,6 +589,67 @@
       "successMessage": "¡Solicitud enviada exitosamente! Te contactaremos pronto.",
       "errorMessage": "Error al enviar la solicitud. Por favor, intenta nuevamente."
     },
+    "leadForm": {
+      "title": "¡Felicidades! Ganaste {discount}% OFF",
+      "subtitle": "Completa tus datos para reclamar tu descuento",
+      "fields": [
+        {
+          "name": "fullName",
+          "label": "Nombre Completo",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ingresa tu nombre completo"
+        },
+        {
+          "name": "phone",
+          "label": "Teléfono",
+          "type": "tel",
+          "required": true,
+          "placeholder": "Ej: 0999-123-456"
+        },
+        {
+          "name": "email",
+          "label": "Email",
+          "type": "email",
+          "required": true,
+          "placeholder": "tu@email.com"
+        },
+        {
+          "name": "debtAmount",
+          "label": "Monto aproximado de tu deuda",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Menos de $1,000",
+            "$1,000 - $5,000",
+            "$5,000 - $15,000",
+            "$15,000 - $30,000",
+            "Más de $30,000"
+          ]
+        }
+      ],
+      "submitText": "Reclamar Descuento",
+      "disclaimer": "Al enviar este formulario, aceptas que nos pongamos en contacto contigo para ayudarte con la negociación de tu deuda.",
+      "successMessage": "¡Descuento aplicado! Te contactaremos pronto para ayudarte.",
+      "errorMessage": "Error al procesar. Intenta nuevamente."
+    },
+    "benefits": [
+      {
+        "title": "Negociación Profesional",
+        "description": "Expertos en negociación de deudas",
+        "icon": "handshake"
+      },
+      {
+        "title": "Planes Flexibles",
+        "description": "Adaptamos el plan a tu situación",
+        "icon": "calendar"
+      },
+      {
+        "title": "Asesoría Gratuita",
+        "description": "Primera consulta sin costo",
+        "icon": "gift"
+      }
+    ],
     "contact": {
       "micIcon": true,
       "micTooltip": "Habla con nosotros"
@@ -567,5 +661,116 @@
       "ogImage": "/images/solucionar-og.jpg",
       "twitterCard": "summary_large_image"
     }
+  },
+
+  "proteccion": {
+    "hero": {
+      "title": "Tus Derechos",
+      "subtitle": "Ejercer tus derechos nunca había sido tan fácil",
+      "description": "Descarga y completa nuestro formulario oficial para ejercer cualquiera de estos derechos",
+      "backgroundEffect": "aurora"
+    },
+    "rights": [
+      {
+        "id": "access",
+        "title": "Acceso",
+        "description": "Conoce qué datos tratamos",
+        "icon": "eye",
+        "color": "blue",
+        "details": "Solicita información sobre qué datos personales procesamos, cómo los utilizamos y con quién los compartimos.",
+        "processingTime": "15 días hábiles",
+        "requirements": [
+          "Identificación válida",
+          "Formulario completo",
+          "Firma del titular"
+        ]
+      },
+      {
+        "id": "rectification",
+        "title": "Rectificación",
+        "description": "Modificar tus datos",
+        "icon": "edit",
+        "color": "green",
+        "details": "Corrige, actualiza o modifica tus datos personales cuando sean inexactos o incompletos.",
+        "processingTime": "15 días hábiles",
+        "requirements": [
+          "Identificación válida",
+          "Documentos de respaldo",
+          "Especificación de cambios"
+        ]
+      },
+      {
+        "id": "deletion",
+        "title": "Eliminación",
+        "description": "Borrar tus datos",
+        "icon": "trash",
+        "color": "red",
+        "details": "Solicita la eliminación de tus datos personales cuando ya no sean necesarios para los fines que fueron recolectados.",
+        "processingTime": "15 días hábiles",
+        "requirements": [
+          "Identificación válida",
+          "Justificación legal",
+          "Confirmación expresa"
+        ],
+        "warning": "Esta acción es irreversible y puede afectar servicios futuros"
+      },
+      {
+        "id": "opposition",
+        "title": "Oposición",
+        "description": "Rechazar el uso",
+        "icon": "shield",
+        "color": "purple",
+        "details": "Oponte al tratamiento de tus datos personales por motivos relacionados con tu situación particular.",
+        "processingTime": "15 días hábiles",
+        "requirements": [
+          "Identificación válida",
+          "Motivos específicos",
+          "Tratamientos objetados"
+        ]
+      }
+    ],
+    "downloadSection": {
+      "title": "Ejerce tus derechos",
+      "description": "Descarga y completa nuestro formulario oficial para ejercer cualquiera de estos derechos",
+      "buttonText": "📄 Descargar Formulario PDF",
+      "downloadUrl": "/documents/formulario-derechos-arco.pdf",
+      "alternativeText": "También puedes solicitarlo por email",
+      "instructions": "Denuncias o inconformidades enviar el PDF al siguiente correo:"
+    },
+    "contact": {
+      "email": "protecciondatospersonales@intelcobro.com",
+      "subject": "Solicitud de ejercicio de derechos ARCO",
+      "phone": "02-234-5678 ext. 101",
+      "address": "Av. De La República 500 y pasaje Carrión, Edificio PUCARÁ, piso 12, Quito - Ecuador",
+      "schedule": "Lunes a Viernes de 8:00 AM a 5:00 PM"
+    },
+    "legalInfo": {
+      "responsibleEntity": "Intelcobro S.A.",
+      "ruc": "1234567890001",
+      "address": "Av. De La República 500 y pasaje Carrión, Edificio PUCARÁ, piso 12, Quito - Ecuador",
+      "dataProtectionOfficer": "Dr. Juan Pérez - DPO Certificado",
+      "regulatoryFramework": "Ley Orgánica de Protección de Datos Personales del Ecuador"
+    }
+  },
+
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ha ocurrido un error",
+    "tryAgain": "Intentar nuevamente",
+    "success": "¡Éxito!",
+    "cancel": "Cancelar",
+    "accept": "Aceptar",
+    "continue": "Continuar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "download": "Descargar",
+    "upload": "Subir",
+    "send": "Enviar",
+    "contact": "Contacto",
+    "required": "Requerido",
+    "optional": "Opcional"
   }
 }

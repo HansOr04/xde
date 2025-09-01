@@ -4,7 +4,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { useVideoState } from '@/hooks/useVideoState'
-import { useBackgroundRemoval } from '@/hooks/useBackgroundRemoval'
 import type { VideoConfig } from '@/types/video'
 
 interface VideoPlayerProps {
@@ -15,8 +14,8 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerProps) {
-  const idleVideoRef = useRef<HTMLVideoElement>(null)
-  const talkingVideoRef = useRef<HTMLVideoElement>(null)
+  const idleImageRef = useRef<HTMLImageElement>(null)
+  const talkingImageRef = useRef<HTMLImageElement>(null)
   const [isLoaded, setIsLoaded] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
@@ -30,190 +29,130 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
     idleTimeout: 3000,
   })
 
-  const backgroundRemoval = useBackgroundRemoval({
-    type: config.backgroundType || 'black',
-    enabled: config.removeBackground ?? true,
-    autoDetect: true,
-  })
-
   // Ensure client-side rendering
   useEffect(() => {
     setIsClient(true)
   }, [])
 
-  // Function to configure a video
-  const setupVideo = useCallback((
-    videoElement: HTMLVideoElement,
+  // Function to configure an image
+  const setupImage = useCallback((
+    imageElement: HTMLImageElement,
     src: string,
     isActive: boolean
   ) => {
-    if (!videoElement || !isClient) return
+    if (!imageElement || !isClient) return
 
     try {
       // Configure basic properties
-      videoElement.src = src
-      videoElement.autoplay = config.autoPlay ?? true
-      videoElement.loop = config.loop ?? true
-      videoElement.muted = config.muted ?? true
-      videoElement.controls = config.controls ?? false
-      videoElement.playsInline = config.playsInline ?? true
+      imageElement.src = src
+      imageElement.alt = isActive ? "Asistente virtual hablando" : "Asistente virtual en espera"
       
-      // Set poster if available
-      if (config.poster && !isActive) {
-        videoElement.poster = config.poster
-      }
-
-      // Apply styles to completely hide controls
-      videoElement.style.outline = 'none'
-      videoElement.style.border = 'none'
-      
-      // Remove control attributes
-      videoElement.removeAttribute('controls')
-      videoElement.setAttribute('disablePictureInPicture', 'true')
-      videoElement.setAttribute('controlsList', 'nodownload nofullscreen noremoteplayback')
-
-      // Apply background removal if enabled
-      if (config.removeBackground) {
-        backgroundRemoval.optimizeForPerformance(videoElement)
-        backgroundRemoval.detectBackground(videoElement)
-      }
+      // Apply styles
+      imageElement.style.outline = 'none'
+      imageElement.style.border = 'none'
+      imageElement.style.userSelect = 'none'
+      imageElement.style.pointerEvents = 'none'
 
       // Configure initial visibility
-      videoElement.style.opacity = isActive ? '1' : '0'
-      videoElement.style.zIndex = isActive ? '2' : '1'
-      videoElement.style.transition = 'opacity 0.3s ease-in-out'
+      imageElement.style.opacity = isActive ? '1' : '0'
+      imageElement.style.zIndex = isActive ? '2' : '1'
+      imageElement.style.transition = 'opacity 0.3s ease-in-out'
 
     } catch (error) {
-      console.error('Error setting up video:', error)
-      onError?.(error instanceof Error ? error.message : 'Error configurando video')
+      console.error('Error setting up image:', error)
+      onError?.(error instanceof Error ? error.message : 'Error configurando imagen')
     }
-  }, [config, backgroundRemoval, onError, isClient])
+  }, [onError, isClient])
 
-  // Function to handle video load
-  const handleVideoLoad = useCallback((videoElement: HTMLVideoElement) => {
+  // Function to handle image load
+  const handleImageLoad = useCallback((imageElement: HTMLImageElement) => {
     setIsLoaded(true)
     onLoad?.()
-    
-    // Ensure autoplay
-    if (config.autoPlay) {
-      videoElement.play().catch((error) => {
-        console.warn('Autoplay prevented:', error)
-        // Autoplay may be blocked, this is normal
-      })
-    }
-  }, [config.autoPlay, onLoad])
+  }, [onLoad])
 
-  // Function to handle video errors
-  const handleVideoError = useCallback((error: Event, videoType: 'idle' | 'talking') => {
-    const errorMessage = `Error cargando video ${videoType}`
+  // Function to handle image errors
+  const handleImageError = useCallback((error: Event, imageType: 'idle' | 'talking') => {
+    const errorMessage = `Error cargando imagen ${imageType}`
     setLoadError(errorMessage)
     onError?.(errorMessage)
-    console.error('Video error:', error)
+    console.error('Image error:', error)
   }, [onError])
 
-  // Function to switch between videos
-  const switchVideo = useCallback((showTalking: boolean) => {
-    const idleVideo = idleVideoRef.current
-    const talkingVideo = talkingVideoRef.current
+  // Function to switch between images
+  const switchImage = useCallback((showTalking: boolean) => {
+    const idleImage = idleImageRef.current
+    const talkingImage = talkingImageRef.current
 
-    if (!idleVideo || !talkingVideo) return
+    if (!idleImage || !talkingImage) return
 
     try {
       if (showTalking) {
-        // Show talking video
-        talkingVideo.style.opacity = '1'
-        talkingVideo.style.zIndex = '3'
-        idleVideo.style.opacity = '0'
-        idleVideo.style.zIndex = '1'
-        
-        // Ensure talking video is playing
-        if (talkingVideo.paused) {
-          talkingVideo.play().catch(console.warn)
-        }
+        // Show talking image
+        talkingImage.style.opacity = '1'
+        talkingImage.style.zIndex = '3'
+        idleImage.style.opacity = '0'
+        idleImage.style.zIndex = '1'
       } else {
-        // Show idle video
-        idleVideo.style.opacity = '1'
-        idleVideo.style.zIndex = '3'
-        talkingVideo.style.opacity = '0'
-        talkingVideo.style.zIndex = '1'
-        
-        // Ensure idle video is playing
-        if (idleVideo.paused) {
-          idleVideo.play().catch(console.warn)
-        }
+        // Show idle image
+        idleImage.style.opacity = '1'
+        idleImage.style.zIndex = '3'
+        talkingImage.style.opacity = '0'
+        talkingImage.style.zIndex = '1'
       }
     } catch (error) {
-      console.error('Error switching videos:', error)
+      console.error('Error switching images:', error)
     }
   }, [])
 
-  // Configure videos when references change
+  // Configure images when references change
   useEffect(() => {
     if (!isClient) return
 
-    const idleVideo = idleVideoRef.current
+    const idleImage = idleImageRef.current
 
-    if (idleVideo && config.idle) {
-      setupVideo(idleVideo, config.idle, currentVideo === 'idle')
+    if (idleImage && config.idle) {
+      setupImage(idleImage, config.idle, currentVideo === 'idle')
       
-      const handleLoad = () => handleVideoLoad(idleVideo)
-      const handleError = (e: Event) => handleVideoError(e, 'idle')
+      const handleLoad = () => handleImageLoad(idleImage)
+      const handleError = (e: Event) => handleImageError(e, 'idle')
       
-      idleVideo.addEventListener('loadeddata', handleLoad)
-      idleVideo.addEventListener('error', handleError)
+      idleImage.addEventListener('load', handleLoad)
+      idleImage.addEventListener('error', handleError)
       
       return () => {
-        idleVideo.removeEventListener('loadeddata', handleLoad)
-        idleVideo.removeEventListener('error', handleError)
+        idleImage.removeEventListener('load', handleLoad)
+        idleImage.removeEventListener('error', handleError)
       }
     }
-  }, [config.idle, currentVideo, setupVideo, handleVideoLoad, handleVideoError, isClient])
+  }, [config.idle, currentVideo, setupImage, handleImageLoad, handleImageError, isClient])
 
   useEffect(() => {
     if (!isClient) return
 
-    const talkingVideo = talkingVideoRef.current
+    const talkingImage = talkingImageRef.current
 
-    if (talkingVideo && config.talking) {
-      setupVideo(talkingVideo, config.talking, currentVideo === 'talking')
+    if (talkingImage && config.talking) {
+      setupImage(talkingImage, config.talking, currentVideo === 'talking')
       
-      const handleLoad = () => handleVideoLoad(talkingVideo)
-      const handleError = (e: Event) => handleVideoError(e, 'talking')
+      const handleLoad = () => handleImageLoad(talkingImage)
+      const handleError = (e: Event) => handleImageError(e, 'talking')
       
-      talkingVideo.addEventListener('loadeddata', handleLoad)
-      talkingVideo.addEventListener('error', handleError)
+      talkingImage.addEventListener('load', handleLoad)
+      talkingImage.addEventListener('error', handleError)
       
       return () => {
-        talkingVideo.removeEventListener('loadeddata', handleLoad)
-        talkingVideo.removeEventListener('error', handleError)
+        talkingImage.removeEventListener('load', handleLoad)
+        talkingImage.removeEventListener('error', handleError)
       }
     }
-  }, [config.talking, currentVideo, setupVideo, handleVideoLoad, handleVideoError, isClient])
+  }, [config.talking, currentVideo, setupImage, handleImageLoad, handleImageError, isClient])
 
-  // Handle video state changes
+  // Handle image state changes
   useEffect(() => {
     if (isClient) {
-      switchVideo(shouldShowTalkingVideo)
+      switchImage(shouldShowTalkingVideo)
     }
-  }, [shouldShowTalkingVideo, switchVideo, isClient])
-
-  // Clean up resources on unmount
-  useEffect(() => {
-    return () => {
-      const idleVideo = idleVideoRef.current
-      const talkingVideo = talkingVideoRef.current
-      
-      if (idleVideo) {
-        idleVideo.pause()
-        idleVideo.src = ''
-      }
-      
-      if (talkingVideo) {
-        talkingVideo.pause()
-        talkingVideo.src = ''
-      }
-    }
-  }, [])
+  }, [shouldShowTalkingVideo, switchImage, isClient])
 
   // Show error state
   if (loadError) {
@@ -223,7 +162,7 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
         className
       )}>
         <div className="text-center p-4">
-          <p className="text-sm text-gray-600 mb-2">Error cargando video</p>
+          <p className="text-sm text-gray-600 mb-2">Error cargando imagen</p>
           <p className="text-xs text-gray-500">{loadError}</p>
         </div>
       </div>
@@ -246,47 +185,41 @@ export function VideoPlayer({ config, className, onLoad, onError }: VideoPlayerP
 
   return (
     <div className={cn(
-      "relative w-full h-full overflow-hidden video-container",
+      "relative w-full h-full overflow-hidden image-container",
       className
     )}>
-      {/* Idle Video */}
-      <video
-        ref={idleVideoRef}
+      {/* Idle Image (GIF) */}
+      <img
+        ref={idleImageRef}
         className={cn(
-          "absolute inset-0 w-full h-full object-cover video-element",
-          "video-state-idle",
-          config.removeBackground && "remove-black-background"
+          "absolute inset-0 w-full h-full object-cover image-element",
+          "image-state-idle"
         )}
         style={{
           opacity: shouldShowIdleVideo ? 1 : 0,
           zIndex: shouldShowIdleVideo ? 3 : 1,
         }}
-        autoPlay={config.autoPlay}
-        loop={config.loop}
-        muted={config.muted}
-        playsInline={config.playsInline}
-        disablePictureInPicture
-        controlsList="nodownload nofullscreen noremoteplaybook"
+        alt="Asistente virtual en espera"
+        loading="eager"
+        decoding="async"
+        draggable={false}
       />
 
-      {/* Talking Video */}
-      <video
-        ref={talkingVideoRef}
+      {/* Talking Image (GIF) */}
+      <img
+        ref={talkingImageRef}
         className={cn(
-          "absolute inset-0 w-full h-full object-cover video-element",
-          "video-state-talking",
-          config.removeBackground && "remove-black-background"
+          "absolute inset-0 w-full h-full object-cover image-element",
+          "image-state-talking"
         )}
         style={{
           opacity: shouldShowTalkingVideo ? 1 : 0,
           zIndex: shouldShowTalkingVideo ? 3 : 1,
         }}
-        autoPlay={config.autoPlay}
-        loop={config.loop}
-        muted={config.muted}
-        playsInline={config.playsInline}
-        disablePictureInPicture
-        controlsList="nodownload nofullscreen noremoteplaybook"
+        alt="Asistente virtual hablando"
+        loading="eager"
+        decoding="async"
+        draggable={false}
       />
 
       {/* Loading overlay */}
