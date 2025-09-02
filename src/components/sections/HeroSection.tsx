@@ -262,6 +262,11 @@ export function HeroSection({ content, videoConfig, className }: HeroSectionProp
       // Limpiar errores previos
       clearSpeechError()
 
+      // Generar sessionId si no existe
+      if (!voiceSessionId) {
+        setVoiceSessionId(generateUUID())
+      }
+
       // 1. Comenzar conversación usando el handler del hook
       handleStartConversation()
       
@@ -273,7 +278,7 @@ export function HeroSection({ content, videoConfig, className }: HeroSectionProp
       setCurrentVideo('idle')
       stopRecording()
     }
-  }, [speechRecognitionSupported, clearSpeechError, handleStartConversation, startListening, setCurrentVideo, stopRecording])
+  }, [speechRecognitionSupported, clearSpeechError, voiceSessionId, handleStartConversation, startListening, setCurrentVideo, stopRecording])
 
   // Función para detener la conversación
   const handleStopConversation = useCallback(() => {
@@ -288,24 +293,37 @@ export function HeroSection({ content, videoConfig, className }: HeroSectionProp
     const processTranscript = async () => {
       if (transcript && transcript.trim().length > 0) {
         console.log('🎤 Texto transcrito:', transcript)
+        console.log('🔍 Código actualizado - usando UUID válido')
         
         try {
           // 3. Procesar transcripción
           setIsConnecting(true)
           setCurrentVideo('talking') // Mantener video hablando durante procesamiento
           
-          // 4. Enviar texto transcrito al backend
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
-          const response = await fetch(`${apiUrl}/assistant/chat`, {
+          // 4. Enviar texto transcrito al backend (usando proxy de Next.js)
+          const fullUrl = '/api/assistant/chat'
+          
+          // Generar o reutilizar sessionId válido para la conversación
+          const currentSessionId = voiceSessionId || generateUUID()
+          if (!voiceSessionId) {
+            setVoiceSessionId(currentSessionId)
+          }
+          
+          const requestBody = {
+            message: transcript,
+            sessionId: currentSessionId
+            // Quitar 'source' - el validador no lo permite
+          }
+          
+          console.log('🔗 Enviando a:', fullUrl)
+          console.log('📤 Datos enviados:', JSON.stringify(requestBody, null, 2))
+          
+          const response = await fetch(fullUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              message: transcript,
-              sessionId: 'voice-session-' + Date.now(),
-              source: 'voice'
-            }),
+            body: JSON.stringify(requestBody),
           })
 
           if (!response.ok) {
@@ -340,7 +358,7 @@ export function HeroSection({ content, videoConfig, className }: HeroSectionProp
       // Pequeño delay para asegurar que se capturó todo el texto
       setTimeout(processTranscript, 500)
     }
-  }, [transcript, isRecording, setCurrentVideo, speak])
+  }, [transcript, isRecording, voiceSessionId, setCurrentVideo, speak])
 
   // Efecto para manejar cuando termina de hablar la IA
   useEffect(() => {
